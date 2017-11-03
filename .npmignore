@@ -1,0 +1,11 @@
+test
+examples
+coverage
+docs
+.idea
+.gitattributes
+.nyc_output
+*.tgz
+*~
+.travis.yml
+release.js
