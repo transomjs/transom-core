@@ -34,6 +34,9 @@
   },
   "dependencies": {
     "pocket-registry": "^1.1.0",
-    "restify": "^6.3.0"
+    "restify": "^5.2.0",
+    "restify-cors-middleware": "^1.0.1",
+    "serve-favicon": "^2.4.5",
+    "sinon": "^4.1.1"
   }
 }

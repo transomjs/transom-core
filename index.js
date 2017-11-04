@@ -26,37 +26,68 @@ function TransomCore() {
 			server = restify.createServer();
 		}
 
-		server.use(restify.requestLogger());
-
+		// Put the transom configuration and API definition into a global registry.
 		server.registry = new PocketRegistry();
 		server.registry.set('transom-options', options);
 
-		// Get an array of valid domain names for CORS and handle OPTIONS requests.
-		const corsOptions = server.registry.get('transom-options.api_definition.cors', {});
-		corsOptions.origins = corsOptions.origins || ['*'];
-		corsOptions.allowHeaders = (corsOptions.allowHeaders || []).concat(['authorization']);
+		// Setup a Bynyan logger with request details
+		const requestLoggerOpts = server.registry.get('transom-options.transom.requestLogger', {});
+		if (requestLoggerOpts) {
+			server.use(restifyPlugins.requestLogger(requestLoggerOpts));
+		}
 
-		const cors = corsMiddleware(corsOptions);
-		server.pre(cors.preflight);
-		server.use(cors.actual);
+		// Use CORS for handling cross-domain ajax requests.
+		const corsOptions = server.registry.get('transom-options.transom.cors', {});
+		if (corsOptions) {
+			// Get an array of valid domain names for CORS and handle OPTIONS requests.
+			corsOptions.origins = corsOptions.origins || ['*'];
+			corsOptions.allowHeaders = (corsOptions.allowHeaders || []).concat(['authorization']);
 
-		// Copy everything into req.params.
-		server.use(restifyPlugins.bodyParser({
-			mapParams: true,
-			limit: 20000 // TODO: server option & test it.
-		}));
-		server.use(restifyPlugins.queryParser({
-			mapParams: true
-		}));
-		server.use(restifyPlugins.urlEncodedBodyParser({
-			mapParams: true
-		}));
+			const cors = corsMiddleware(corsOptions);
+			server.pre(cors.preflight);
+			server.use(cors.actual);
+		}
 
-		server.use(restify.gzipResponse());
-		server.use(restify.fullResponse());
+		// Parse body parameters into the req.params object.
+		const bodyOpts = server.registry.get('transom-options.transom.bodyParser', {});
+		if (bodyOpts) {
+			bodyOpts.mapParams = (bodyOpts.mapParams === undefined) ? true : bodyOpts.mapParams; // default true
+			bodyOpts.limit = (bodyOpts.limit === undefined) ? 20000 : bodyOpts.limit; // default 20000
+			server.use(restifyPlugins.bodyParser(bodyOpts));
+		}
+
+		// Parse query parameters into the req.params object.
+		const queryOpts = server.registry.get('transom-options.transom.queryParser', {});
+		if (queryOpts) {
+			queryOpts.mapParams = (queryOpts.mapParams === undefined) ? true : queryOpts.mapParams; // default true
+			server.use(restifyPlugins.queryParser(queryOpts));
+		}
+
+		// Parse url-encoded forms into the req.params object.
+		const encBodyOpts = server.registry.get('transom-options.transom.urlEncodedBodyParser', {});
+		if (encBodyOpts) {
+			encBodyOpts.mapParams = (encBodyOpts.mapParams === undefined) ? true : encBodyOpts.mapParams; // default true
+			server.use(restifyPlugins.urlEncodedBodyParser(encBodyOpts));
+		}
+
+		// Compress API responses with gzip.
+		const gzipOpts = server.registry.get('transom-options.transom.gzipResponse', {});
+		if (gzipOpts) {
+			server.use(restifyPlugins.gzipResponse(gzipOpts));
+		}
+
+		// Use fullResponse, adding a bunch of Headers to the response.
+		const fullOpts = server.registry.get('transom-options.transom.fullResponse', {});
+		if (fullOpts) {
+			server.use(restifyPlugins.fullResponse(fullOpts));
+		}
 
 		// Provide a transom icon for API GET requests from a browser.
-		server.use(favicon(path.join(__dirname, 'images', 'favicon.ico')));
+		const faviconOpts = server.registry.get('transom-options.transom.favicon', {});
+		if (faviconOpts) {
+			faviconOpts.path = faviconOpts.path || path.join(__dirname, 'images', 'favicon.ico');
+			server.use(favicon(faviconOpts.path));
+		}
 
 		// Create req.locals *before* initializing all our plugins!
 		server.use(function (req, res, next) {
@@ -65,23 +96,17 @@ function TransomCore() {
 			next();
 		});
 
-		console.log("Transom core initialize");
-		try {
-			// Setup each of our plugins, in the order they've been added.
-			for (const pluginObj of plugins) {
-				try {
-					pluginObj.plugin.initialize(server, pluginObj.options);
-				} catch (err) {
-					console.error("Transom core initialize failed", err);
-					throw err;
-				}
+		// Configure each registered plugin, in the order they've been added.
+		for (const each of plugins) {
+			try {
+				each.plugin.initialize(server, each.options);
+			} catch (err) {
+				//console.error("Transom core initialize failed;", err);
+				throw err;
 			}
-		} catch (err) {
-			console.error("Transom core initialize failed", err);
-			throw err;
 		}
 		return server;
 	};
 };
 
-module.exports = new TransomCore();
+module.exports = TransomCore;
