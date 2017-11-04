@@ -53,11 +53,20 @@ describe('TransomCore', function () {
 
         expect(createLocals).to.exist.and.be.an.instanceof(Function);
 
+        // Set the default, empty objects ib locals & session.
         const req = {};
-        createLocals(req, {}, {});
-        expect(req.locals).to.exist;
-        expect(req.session).to.exist;
+        const res = {};
+        const next = function () {};
+        createLocals(req, res, next);
+        expect(req.locals).to.exist.and.to.eql({});
+        expect(req.session).to.exist.and.to.eql({});
 
+        // Try again with custom objects.
+        req.locals.foo = 123;
+        req.session.bar = 'baz';
+        createLocals(req, res, next);
+        expect(req.locals).to.exist.and.to.eql({foo: 123});
+        expect(req.session).to.exist.and.to.eql({bar: 'baz'});
     });
 
     it('can be initialized with defaults on everything', function () {
