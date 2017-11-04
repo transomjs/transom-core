@@ -54,7 +54,7 @@ describe('TransomCore', function () {
 
         expect(createLocals).to.exist.and.be.an.instanceof(Function);
 
-        // Set the default, empty objects ib locals & session.
+        // Set the default, empty objects in locals & session.
         const req = {};
         const res = {};
         const next = function () {};
@@ -144,6 +144,4 @@ describe('TransomCore', function () {
     it('can initialize with an empty api definition', function () {
         expect(core.initialize({})).to.exist;
     });
-
-
 });
