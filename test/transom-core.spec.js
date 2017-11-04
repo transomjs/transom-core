@@ -1,5 +1,6 @@
 "use strict";
 const expect = require('chai').expect;
+const path = require('path');
 const sinon = require('sinon');
 const TransomCore = require('../');
 
@@ -84,6 +85,34 @@ describe('TransomCore', function () {
 
         Object.keys(myApi.transom).map(function (key) {
             myApi.transom[key] = {};
+        })
+
+        const server = core.initialize(dummyServer, myApi);
+        expect(dummyServer.pre.calledOnce).to.be.true;
+        // Every entry in the transom node should result in a call to server.use
+        // plus 1 extra for the req.locals middleware that's always called.
+        expect(dummyServer.use.callCount).to.equal(Object.keys(myApi.transom).length + 1);
+        // Cors preflight calls serve.pre
+        expect(dummyServer.pre.calledOnce).to.be.true;
+    });
+
+    it('can be initialized with the same parameters on everything!', function () {
+        const dummyServer = {};
+        dummyServer.pre = sinon.spy();
+        dummyServer.use = sinon.spy();
+
+        const myApi = {
+            transom: TRANSOM
+        };
+
+        Object.keys(myApi.transom).map(function (key) {
+            myApi.transom[key] = {
+                mapParams: true,
+                origins: ['foo'],
+                allowHeaders: ['bad-header'],
+                limit: 1000,
+                path: path.join(__dirname, '..', 'images', 'favicon.ico')
+            };
         })
 
         const server = core.initialize(dummyServer, myApi);

@@ -30,7 +30,7 @@ function TransomCore() {
 		server.registry = new PocketRegistry();
 		server.registry.set('transom-options', options);
 
-		// Setup a Bynyan logger with request details
+		// Setup a Bunyan logger with request details.
 		const requestLoggerOpts = server.registry.get('transom-options.transom.requestLogger', {});
 		if (requestLoggerOpts) {
 			server.use(restifyPlugins.requestLogger(requestLoggerOpts));
