@@ -65,8 +65,12 @@ describe('TransomCore', function () {
         req.locals.foo = 123;
         req.session.bar = 'baz';
         createLocals(req, res, next);
-        expect(req.locals).to.exist.and.to.eql({foo: 123});
-        expect(req.session).to.exist.and.to.eql({bar: 'baz'});
+        expect(req.locals).to.exist.and.to.eql({
+            foo: 123
+        });
+        expect(req.session).to.exist.and.to.eql({
+            bar: 'baz'
+        });
     });
 
     it('can be initialized with defaults on everything', function () {
