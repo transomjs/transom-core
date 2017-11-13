@@ -2,6 +2,7 @@
 const expect = require('chai').expect;
 const path = require('path');
 const sinon = require('sinon');
+const restifyErrors = require('restify-errors');
 const TransomCore = require('../');
 
 describe('TransomCore', function () {
@@ -28,6 +29,12 @@ describe('TransomCore', function () {
         core = new TransomCore();
     });
 
+    it('includes restify-errors as a dependency', function () {
+        const err = new restifyErrors.ImATeapotError("I'm a little teapot.");
+        expect(err.message).to.equal("I'm a little teapot.");
+        expect(err.code).to.equal("ImATeapot");
+    });
+        
     it('can be initialized with everything turned off', function () {
         const dummyServer = {};
         dummyServer.pre = sinon.spy();
