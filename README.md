@@ -7,8 +7,29 @@ Transom-core is a foundation for low-code REST API server development. Transom i
 ## Installation
 
 ```bash
-$ npm install --save transom-core
+$ npm install --save @transomjs/transom-core
 ```
 
-## Usage
-...Work in progress
+## Usage Example
+
+```
+const myApi = require('./myApi');
+const Transom = require('@transomjs/transom-core');
+
+const transom = new Transom();
+
+// Register Transom modules
+transom.configure(transomMongoose, {
+  mongodb_uri: 'mongodb://local-mongodb/transom-dev'
+});
+
+// Initialize all modules at once, returns a Restify server instance.
+const server = transom.initialize(myApi);
+
+// Add any additional routes as necessary.
+server.get('/hello', function (req, res, next) {
+  res.json({hello: 'world'});
+  next();
+});
+
+```
