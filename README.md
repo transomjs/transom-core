@@ -13,17 +13,22 @@ $ npm install --save @transomjs/transom-core
 ## Usage Example
 
 ```javascript
+// Require our API definition
 const myApi = require('./myApi');
-const Transom = require('@transomjs/transom-core');
 
+// Require the Transom-core and any Transom modules
+const Transom = require('@transomjs/transom-core');
+const transomMongoose = require('@transomjs/transom-mongoose');
+
+// Instantiate Transom
 const transom = new Transom();
 
-// Register Transom modules
+// Register and configure Transom modules
 transom.configure(transomMongoose, {
   mongodb_uri: 'mongodb://local-mongodb/transom-dev'
 });
 
-// Initialize all modules at once, returns a Restify server instance.
+// Initialize all modules at once, returning a Restify server instance.
 const server = transom.initialize(myApi);
 
 // Add any additional routes as necessary.
@@ -32,4 +37,5 @@ server.get('/hello', function (req, res, next) {
   next();
 });
 
+// Handle errors as usual
 ```
