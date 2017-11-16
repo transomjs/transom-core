@@ -38,7 +38,6 @@
     "pocket-registry": "^1.1.0",
     "restify": "^5.2.0",
     "restify-cors-middleware": "^1.0.1",
-    "restify-errors": "^5.0.0",
     "serve-favicon": "^2.4.5"
   }
 }
