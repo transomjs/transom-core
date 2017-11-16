@@ -12,7 +12,7 @@ $ npm install --save @transomjs/transom-core
 
 ## Usage Example
 
-```
+```javascript
 const myApi = require('./myApi');
 const Transom = require('@transomjs/transom-core');
 
