@@ -59,6 +59,35 @@ server.listen(7000, function () {
 	console.log('%s listening at %s', server.name, server.url);
 });
 ```
+## What does the metadata look like?
+
+If you can create simple JavaScript Objects, you can handle the metadata. By using JavaScript Objects, we can piece together bits of metadata from just about anywhere. 
+
+The following is the.. :
+
+```javascript
+module.exports = {
+	note: "default api definition",
+	name: "My App",
+	administrator_email: "admin@mymail.foo",
+	transom: {},
+	api_definition: {
+		api_version: 1,
+		api_code: "abc123",
+		api_description: "",
+		api_context: {
+			contact_name: "",
+			contact_email: "",
+			contact_url: "",
+			license_url: "",
+			license_name: "",
+			terms_of_service_url: ""
+		},
+		cors: {
+			origins: ['http://localhost:8080'],
+			exposeHeaders: ['foo']
+		},
+```
 
 ## Transom modules
 
