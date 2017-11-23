@@ -1,6 +1,6 @@
 
 # transom-core
-Transom-core is a foundation for low-code REST API and realtime server development. Transom applications use meta-data to configure pre-built and tested modules that allow developers to quickly piece together services that 'just work'! 
+Transom-core is a foundation for low-code REST API and realtime server development. Transom applications use metadata to configure pre-built and tested modules that allow developers to quickly piece together services that 'just work'! 
 
 [![Build Status](https://travis-ci.org/transomjs/transom-core.svg?branch=master)](https://travis-ci.org/transomjs/transom-core)
 [![Coverage Status](https://coveralls.io/repos/github/transomjs/transom-core/badge.svg?branch=master)](https://coveralls.io/github/transomjs/transom-core?branch=master)
@@ -11,20 +11,13 @@ Transom uses Restify as it's core. We use Passport for authentication, Mongoose 
 Did we miss your favorite project or something you need for your product? Create a Transom module and let us know about it!
 
 ## Extensible
-A transom server without modules, is just an empty Restify server. Adding functionality goes quickly with well thought out 
-Out of the box, 
-Transom provides a simple framework to configure and load modules to provide common REST API functions. Features not available in an existing module can be added directly to the (Restify) server as custom routes or rolled into a custom module that can be loaded along-side loaded with other Transom modules.
-
-metadata to define routes adding support for 
+A transom server without modules, is just an empty Restify server. Adding functionality goes quickly with well thought out modules to provide common REST API functions. Features not available in an existing module can be added directly to the (Restify) server as custom routes or rolled into a custom module that can be loaded along-side with other Transom modules.
 
 ## Installation
-
 ```bash
 $ npm install --save @transomjs/transom-core
 ```
 
-## Features
-* Mongoose
 
 ## Usage Example
 
