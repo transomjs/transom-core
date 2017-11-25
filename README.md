@@ -129,7 +129,10 @@ const myApi = {
 	}
 };
 ```
- If you would prefer not to use any of the plugins applied in core, set the corresponding option to false. The following config disables the default `favicon` plugin.
+### TransomCore plugins
+The following plugins come standard in a Transom based server because we've found them to be both necessary and useful. Options provided in the definition are passed directly to each plugin unless otherwise documented below. See the documentation on each respective plugin as it's going to be more current than if we copied it here.
+
+If you would prefer not to use any of the plugins applied in core, set the corresponding option to false. The following config disables the default `favicon` plugin.
 ```javascript
 const myApi = {
 	transom: {
@@ -164,7 +167,7 @@ http://restify.com/docs/plugins-api/#fullresponse
 
 #### favicon
 https://www.npmjs.com/package/serve-favicon
-If a `path` option is not provided, an icon will be served from ./node_modules/transom-code/images/favicon.ico.
+If a `path` option is not provided, an icon will be served from ./node_modules/transom-core/images/favicon.ico.
 
 
 ## Transom modules
