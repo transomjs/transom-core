@@ -8,6 +8,7 @@ Transom-core is a foundation for low-code REST API and realtime server developme
 ## Based on many projects you already know!
 Transom uses Restify as it's core. We use Passport for authentication, Mongoose for data, SocketIO for realtime updates, Nodemailer for sending emails created with EJS templates!
 
+#### Need something else?
 Did we miss your favorite project or something you need for your product? Create a Transom module and let us know about it!
 
 ## Extensible
@@ -92,7 +93,7 @@ module.exports = {
 ```
 
 ## Configuring Transom-Core
-TransomCore uses attributes from the `transom` node in the definition file to apply defaultson start-up.
+TransomCore uses attributes from the `transom` node in the definition file to apply defaults on start-up. If you don't need to make any specific configuration changes, the node can be dropped altogether to use the provided defaults.
 ```javascript
 const myApi = {
 	transom: {
@@ -101,14 +102,19 @@ const myApi = {
 			origins: ['http://localhost:8080', 'http://my-dev-server']
 		},
 		bodyParser: {
-			mapParams: true,
-
+			mapParams: true
 		},
-		queryParser: {},
-		urlEncodedBodyParser: {},
+		queryParser: {
+			mapParams: true
+		},
+		urlEncodedBodyParser: {
+			mapParams: true
+		},
 		gzipResponse: {},
 		fullResponse: {},
-		favicon: {},
+		favicon: {
+			path: "/assets/favicon.ico"
+		},
 	}
 };
 ```
@@ -131,7 +137,7 @@ The `origins` option is set to a wildcard for easier development and can be set 
 
 #### bodyParser
 http://restify.com/docs/plugins-api/#bodyparser
-The `mapParams` optin is set to true by default. Many Transom modules will only look for submitted values in req.params, rather than having to check in each of req.query or req.body.
+The `mapParams` option is set to true by default. Many Transom modules will only look for submitted values in req.params, rather than having to check in each of req.query or req.body.
 
 #### urlEncodedBodyParser
 A child plugin of the bodyParser.
