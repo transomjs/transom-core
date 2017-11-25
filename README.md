@@ -19,12 +19,11 @@ A transom server without modules, is just an empty Restify server. Adding functi
 $ npm install --save @transomjs/transom-core
 ```
 
-
 ## Usage Example
 
 The following simple example is the `index.js` file from a REST API built with Transom. 
 
-* Import the Transom-core and create an new instance.
+* Import the Transom-core and create a new instance.
 * Import and configure any Transom modules.
 * Import your API definition; This is the metadata that defines your API.
 * Call transom.initialize() with your metadata object. It will return a restify server.
@@ -62,6 +61,18 @@ server.listen(7000, function () {
 	console.log('%s listening at %s', server.name, server.url);
 });
 ```
+## Want to add something before the Transom plugins?
+That's easy too. Simply create your own server instance and pass it to Transom after it's been initilized.
+```javascript
+// Create your own Restify server instance and initialize it as needed.
+const server = restify.createServer();
+server.use(myCustomPlugin);
+// Later, initialize the registered Transom modules.
+transom.initialize(server, myApi);
+```
+
+
+
 ## What does the metadata look like?
 
 If you can create simple JavaScript Objects, you can handle the metadata. By using JavaScript Objects, we can piece together bits of metadata from just about anywhere. 
