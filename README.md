@@ -77,25 +77,32 @@ transom.initialize(server, myApi);
 
 If you can create simple JavaScript Objects, you can handle the metadata. By using JavaScript Objects, we can piece together bits of metadata from just about anywhere. 
 
-The following is the.. :
+The following is a partial Transom config file (some of which is 'future state'...):
 
 ```javascript
 module.exports = {
 	note: "default api definition",
 	name: "My App",
-	administrator_email: "admin@mymail.foo",
 	transom: {},
 	definition: {
-		api_version: 1,
-		api_code: "abc123",
-		api_description: "",
-		api_context: {
-			contact_name: "",
-			contact_email: "",
-			contact_url: "",
-			license_url: "",
-			license_name: "",
-			terms_of_service_url: ""
+		version: 1,
+		apiCode: "abc123",
+		description: "",
+		context: {
+			administrator: {
+				name: "",
+				email: ""
+			}
+			contact: {
+				name: "",
+				email: "",
+				url: ""
+			}
+			license: {
+				name: "",
+				url: ""
+			}
+			termsOfServiceUrl: ""
 		},
 		cors: {
 			origins: ['http://localhost:8080'],
@@ -125,7 +132,7 @@ const myApi = {
 		fullResponse: {},
 		favicon: {
 			path: "/assets/favicon.ico"
-		},
+		}
 	}
 };
 ```
