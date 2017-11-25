@@ -73,7 +73,7 @@ module.exports = {
 	name: "My App",
 	administrator_email: "admin@mymail.foo",
 	transom: {},
-	api_definition: {
+	definition: {
 		api_version: 1,
 		api_code: "abc123",
 		api_description: "",
@@ -91,17 +91,76 @@ module.exports = {
 		},
 ```
 
+## Configuring Transom-Core
+TransomCore uses attributes from the `transom` node in the definition file to apply defaultson start-up.
+```javascript
+const myApi = {
+	transom: {
+		requestLogger: {},
+		cors: {
+			origins: ['http://localhost:8080', 'http://my-dev-server']
+		},
+		bodyParser: {
+			mapParams: true,
+
+		},
+		queryParser: {},
+		urlEncodedBodyParser: {},
+		gzipResponse: {},
+		fullResponse: {},
+		favicon: {},
+	}
+};
+```
+ If you would prefer not to use any of the plugins applied in core, set the corresponding option to false. The following config disables the default `favicon` plugin.
+```javascript
+const myApi = {
+	transom: {
+		favicon: false
+	}
+};
+```
+
+#### requestLogger
+http://restify.com/docs/plugins-api/#requestlogger
+
+#### cors
+https://www.npmjs.com/package/restify-cors-middleware
+The `authorization` header is added to the `allowHeaders` option automatically as it's required for Bearer authentication.
+The `origins` option is set to a wildcard for easier development and can be set with an environment variable when moving to test or production. Both preflight & actual middleware are applied.
+
+#### bodyParser
+http://restify.com/docs/plugins-api/#bodyparser
+The `mapParams` optin is set to true by default. Many Transom modules will only look for submitted values in req.params, rather than having to check in each of req.query or req.body.
+
+#### urlEncodedBodyParser
+A child plugin of the bodyParser.
+
+#### queryParser
+http://restify.com/docs/plugins-api/#queryparser
+
+#### gzipResponse
+http://restify.com/docs/plugins-api/#gzipresponse
+
+#### fullResponse
+http://restify.com/docs/plugins-api/#fullresponse
+
+#### favicon
+https://www.npmjs.com/package/serve-favicon
+If a `path` option is not provided, an icon will be served from ./node_modules/transom-code/images/favicon.ico.
+
+
 ## Transom modules
 
-Transom modules can be as simple as middleware, or complex ORM solutions. The following demonstrates how simple a Transom module can really be.
+Transom modules can be simple middleware, or complex ORM solutions. The following demonstrates how simple a Transom module can really be.
 
 ```javascript
 function TransomConsole() {
 	this.initialize = function(server, options) {
-		console.log("Initializing Transom-console...");
-
+		console.log("Initializing Transom-console.");
 		server.use(function(req, res, next) {
-					console.log("Transom-console...", req.url);
+			console.log("Transom-console...", req.url);
+			next();
 		});
 	}
 }

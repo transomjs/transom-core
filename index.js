@@ -31,17 +31,17 @@ function TransomCore() {
 
 		// Put the transom configuration and API definition into a global registry.
 		server.registry = new PocketRegistry();
-		server.registry.set('transom-options', options);
+		server.registry.set('transom-config', options);
 
 		// Setup a Bunyan logger with request details.
-		const requestLoggerOpts = server.registry.get('transom-options.transom.requestLogger', {});
+		const requestLoggerOpts = server.registry.get('transom-config.transom.requestLogger', {});
 		if (requestLoggerOpts) {
 			debug('Adding Restify RequestLogger plugin');
 			server.use(restifyPlugins.requestLogger(requestLoggerOpts));
 		}
 
 		// Use CORS for handling cross-domain ajax requests.
-		const corsOptions = server.registry.get('transom-options.transom.cors', {});
+		const corsOptions = server.registry.get('transom-config.transom.cors', {});
 		if (corsOptions) {
 			debug('Adding CORS handling');
 			// Get an array of valid domain names for CORS and handle OPTIONS requests.
@@ -54,7 +54,7 @@ function TransomCore() {
 		}
 
 		// Parse body parameters into the req.params object.
-		const bodyOpts = server.registry.get('transom-options.transom.bodyParser', {});
+		const bodyOpts = server.registry.get('transom-config.transom.bodyParser', {});
 		if (bodyOpts) {
 			debug('Adding Restify BodyParser plugin');
 			bodyOpts.mapParams = (bodyOpts.mapParams === undefined) ? true : bodyOpts.mapParams; // default true
@@ -63,7 +63,7 @@ function TransomCore() {
 		}
 
 		// Parse query parameters into the req.params object.
-		const queryOpts = server.registry.get('transom-options.transom.queryParser', {});
+		const queryOpts = server.registry.get('transom-config.transom.queryParser', {});
 		if (queryOpts) {
 			debug('Adding Restify QueryParser plugin');
 			queryOpts.mapParams = (queryOpts.mapParams === undefined) ? true : queryOpts.mapParams; // default true
@@ -71,7 +71,7 @@ function TransomCore() {
 		}
 
 		// Parse url-encoded forms into the req.params object.
-		const encBodyOpts = server.registry.get('transom-options.transom.urlEncodedBodyParser', {});
+		const encBodyOpts = server.registry.get('transom-config.transom.urlEncodedBodyParser', {});
 		if (encBodyOpts) {
 			debug('Adding Restify UrlEncodedBodyParser plugin');
 			encBodyOpts.mapParams = (encBodyOpts.mapParams === undefined) ? true : encBodyOpts.mapParams; // default true
@@ -79,21 +79,21 @@ function TransomCore() {
 		}
 
 		// Compress API responses with gzip.
-		const gzipOpts = server.registry.get('transom-options.transom.gzipResponse', {});
+		const gzipOpts = server.registry.get('transom-config.transom.gzipResponse', {});
 		if (gzipOpts) {
 			debug('Adding Restify GzipResponse plugin');
 			server.use(restifyPlugins.gzipResponse(gzipOpts));
 		}
 
 		// Use fullResponse, adding a bunch of Headers to the response.
-		const fullOpts = server.registry.get('transom-options.transom.fullResponse', {});
+		const fullOpts = server.registry.get('transom-config.transom.fullResponse', {});
 		if (fullOpts) {
 			debug('Adding Restify FullResponse plugin');
 			server.use(restifyPlugins.fullResponse(fullOpts));
 		}
 
 		// Provide a transom icon for API GET requests from a browser.
-		const faviconOpts = server.registry.get('transom-options.transom.favicon', {});
+		const faviconOpts = server.registry.get('transom-config.transom.favicon', {});
 		if (faviconOpts) {
 			debug('Adding Favicon support');
 			faviconOpts.path = faviconOpts.path || path.join(__dirname, 'images', 'favicon.ico');
