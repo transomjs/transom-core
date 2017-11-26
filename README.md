@@ -71,46 +71,12 @@ server.use(myCustomPlugin);
 transom.initialize(server, myApi);
 ```
 
-
-
 ## What does the metadata look like?
 
 If you can create simple JavaScript Objects, you can handle the metadata. By using JavaScript Objects, we can piece together bits of metadata from just about anywhere. 
 
-The following is a partial Transom config file (some of which is 'future state'...):
-
-```javascript
-module.exports = {
-	note: "default api definition",
-	name: "My App",
-	transom: {},
-	definition: {
-		version: 1,
-		apiCode: "abc123",
-		description: "",
-		context: {
-			administrator: {
-				name: "",
-				email: ""
-			}
-			contact: {
-				name: "",
-				email: "",
-				url: ""
-			}
-			license: {
-				name: "",
-				url: ""
-			}
-			termsOfServiceUrl: ""
-		},
-		cors: {
-			origins: ['http://localhost:8080'],
-			exposeHeaders: ['foo']
-		},
-```
-
 ## Configuring Transom-Core
+
 TransomCore uses attributes from the `transom` node in the definition file to apply defaults on start-up. If you don't need to make any specific configuration changes, the node can be dropped altogether to use the provided defaults.
 ```javascript
 const myApi = {
@@ -136,10 +102,11 @@ const myApi = {
 	}
 };
 ```
+
 ### TransomCore plugins
 The following plugins come standard in a Transom based server because we've found them to be both necessary and useful. Options provided in the definition are passed directly to each plugin unless otherwise documented below. See the documentation on each respective plugin as it's going to be more current than if we copied it here.
 
-If you would prefer not to use any of the plugins applied in core, set the corresponding option to false. The following config disables the default `favicon` plugin.
+If you would prefer not to use any of the individual plugins applied in core, set the corresponding option to false. The following config disables the default `favicon` plugin.
 ```javascript
 const myApi = {
 	transom: {
@@ -161,10 +128,10 @@ http://restify.com/docs/plugins-api/#bodyparser
 The `mapParams` option is set to true by default. Many Transom modules will only look for submitted values in req.params, rather than having to check in each of req.query or req.body.
 
 #### urlEncodedBodyParser
-A child plugin of the bodyParser.
+A child plugin of the bodyParser. The `mapParams` option is set to true by default.
 
 #### queryParser
-http://restify.com/docs/plugins-api/#queryparser
+http://restify.com/docs/plugins-api/#queryparser The `mapParams` option is set to true by default.
 
 #### gzipResponse
 http://restify.com/docs/plugins-api/#gzipresponse
