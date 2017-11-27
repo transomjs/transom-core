@@ -34,7 +34,7 @@ describe('TransomCore', function () {
         expect(err.message).to.equal("I'm a little teapot.");
         expect(err.code).to.equal("ImATeapot");
     });
-        
+
     it('can be initialized with everything turned off', function () {
         const dummyServer = {};
         dummyServer.pre = sinon.spy();
@@ -101,6 +101,25 @@ describe('TransomCore', function () {
         expect(dummyServer.use.callCount).to.equal(Object.keys(myApi.transom).length + 1);
         // Cors preflight calls serve.pre
         expect(dummyServer.pre.calledOnce).to.be.true;
+        // Default api URI prefix.
+        const prefix = server.registry.get('transom-config.definition.uri.prefix', "dummy");
+        expect(prefix).to.equal('/api/v1');
+    });
+
+    it('validates the URI prefix on initialize', function () {
+        const dummyServer = {};
+        dummyServer.pre = sinon.spy();
+        dummyServer.use = sinon.spy();
+
+        const myApi = {
+            definition: {
+                uri: {
+                    prefix: 'invalidUri'
+                }
+            }
+        };
+
+        expect(core.initialize.bind(core, dummyServer, myApi)).to.throw('Invalid URI prefix: invalidUri');
     });
 
     it('can be initialized with the same parameters on everything!', function () {

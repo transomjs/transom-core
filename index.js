@@ -33,6 +33,19 @@ function TransomCore() {
 		server.registry = new PocketRegistry();
 		server.registry.set('transom-config', options);
 
+		// Make sure we use the same default URI prefix everywhere.
+		if (!server.registry.has('transom-config.definition.uri.prefix')) {
+			server.registry.set('transom-config.definition.uri.prefix', '/api/v1');
+		}
+		// Confirm that the URI prefix starts with a /, but doesn't end in one.
+		const prefix = server.registry.get('transom-config.definition.uri.prefix');
+		debug('Using URI prefix:', prefix, prefix.length, prefix[0], prefix[prefix.length - 1]);
+		if (!(prefix.length > 0 && prefix[0] === '/' && prefix[prefix.length - 1] !== '/')) {
+			throw new Error(`Invalid URI prefix: ${prefix}`);
+		}
+		debug('Using URI prefix:', prefix);
+		
+
 		// Setup a Bunyan logger with request details.
 		const requestLoggerOpts = server.registry.get('transom-config.transom.requestLogger', {});
 		if (requestLoggerOpts) {
