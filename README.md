@@ -61,6 +61,17 @@ server.listen(7000, function () {
 	console.log('%s listening at %s', server.name, server.url);
 });
 ```
+
+## Example apps
+We've created a few small apis to demonstrate the usage of individual plugins:
+
+https://github.com/binaryops-wiebo/transom-scaffold-example
+https://github.com/4umfreak/transom-smtp-example
+https://github.com/4umfreak/transom-mongoose-example
+
+...more coming soon ...
+
+
 ## Want to add something before the Transom plugins?
 That's easy too. Simply create your own server instance and pass it to Transom after it's been initilized.
 ```javascript
