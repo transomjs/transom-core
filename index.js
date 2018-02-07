@@ -131,6 +131,18 @@ function TransomCore() {
 				throw err;
 			}
 		}
+		// run preStart each registered plugin, in the order they've been added.
+		for (const each of plugins) {
+			try {
+				debug('Prestarting Transom plugin:', each.plugin.constructor.name);
+				if (each.plugin.preStart){
+					each.plugin.preStart(server, each.options);
+				}
+			} catch (err) {
+				debug("Transom core preStart failed!", err);
+				throw err;
+			}
+		}
 		return server;
 	};
 };
