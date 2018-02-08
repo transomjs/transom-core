@@ -35,7 +35,7 @@ describe('TransomCore', function () {
         expect(err.code).to.equal("ImATeapot");
     });
 
-    it('can be initialized with everything turned off', function () {
+    it('can be initialized with everything turned off', function (done) {
         const dummyServer = {};
         dummyServer.pre = sinon.spy();
         let createLocals;
@@ -54,34 +54,37 @@ describe('TransomCore', function () {
         };
 
         core.configure(dummyModule, dummyOptions);
-        const server = core.initialize(dummyServer, myApi);
-        expect(server.dummy).to.exist.and.to.eql(dummyOptions);
-        expect(dummyServer.pre.notCalled).to.be.true;
-        expect(dummyServer.use.calledOnce).to.be.true;
+        core.initialize(dummyServer, myApi).then(function(server){
+            expect(server.dummy).to.exist.and.to.eql(dummyOptions);
+            expect(dummyServer.pre.notCalled).to.be.true;
+            expect(dummyServer.use.calledOnce).to.be.true;
 
-        expect(createLocals).to.exist.and.be.an.instanceof(Function);
+            expect(createLocals).to.exist.and.be.an.instanceof(Function);
 
-        // Set the default, empty objects in locals & session.
-        const req = {};
-        const res = {};
-        const next = function () {};
-        createLocals(req, res, next);
-        expect(req.locals).to.exist.and.to.eql({});
-        expect(req.session).to.exist.and.to.eql({});
+            // Set the default, empty objects in locals & session.
+            const req = {};
+            const res = {};
+            const next = function () {};
+            createLocals(req, res, next);
+            expect(req.locals).to.exist.and.to.eql({});
+            expect(req.session).to.exist.and.to.eql({});
 
-        // Try again with custom objects.
-        req.locals.foo = 123;
-        req.session.bar = 'baz';
-        createLocals(req, res, next);
-        expect(req.locals).to.exist.and.to.eql({
-            foo: 123
+            // Try again with custom objects.
+            req.locals.foo = 123;
+            req.session.bar = 'baz';
+            createLocals(req, res, next);
+            expect(req.locals).to.exist.and.to.eql({
+                foo: 123
+            });
+            expect(req.session).to.exist.and.to.eql({
+                bar: 'baz'
+            });
+            done();
         });
-        expect(req.session).to.exist.and.to.eql({
-            bar: 'baz'
-        });
+        
     });
 
-    it('can be initialized with defaults on everything', function () {
+    it('can be initialized with defaults on everything', function (done) {
         const dummyServer = {};
         dummyServer.pre = sinon.spy();
         dummyServer.use = sinon.spy();
@@ -94,19 +97,23 @@ describe('TransomCore', function () {
             myApi.transom[key] = {};
         })
 
-        const server = core.initialize(dummyServer, myApi);
-        expect(dummyServer.pre.calledOnce).to.be.true;
-        // Every entry in the transom node should result in a call to server.use
-        // plus 1 extra for the req.locals middleware that's always called.
-        expect(dummyServer.use.callCount).to.equal(Object.keys(myApi.transom).length + 1);
-        // Cors preflight calls serve.pre
-        expect(dummyServer.pre.calledOnce).to.be.true;
-        // Default api URI prefix.
-        const prefix = server.registry.get('transom-config.definition.uri.prefix', "dummy");
-        expect(prefix).to.equal('/api/v1');
+        core.initialize(dummyServer, myApi).then(function(server){
+        
+            expect(dummyServer.pre.calledOnce).to.be.true;
+            // Every entry in the transom node should result in a call to server.use
+            // plus 1 extra for the req.locals middleware that's always called.
+            expect(dummyServer.use.callCount).to.equal(Object.keys(myApi.transom).length + 1);
+            // Cors preflight calls serve.pre
+            expect(dummyServer.pre.calledOnce).to.be.true;
+            // Default api URI prefix.
+            const prefix = server.registry.get('transom-config.definition.uri.prefix', "dummy");
+            expect(prefix).to.equal('/api/v1');
+
+            done();
+        });
     });
 
-    it('validates the URI prefix on initialize', function () {
+    it('validates the URI prefix on initialize', function (done) {
         const dummyServer = {};
         dummyServer.pre = sinon.spy();
         dummyServer.use = sinon.spy();
@@ -119,10 +126,18 @@ describe('TransomCore', function () {
             }
         };
 
-        expect(core.initialize.bind(core, dummyServer, myApi)).to.throw('Invalid URI prefix: invalidUri');
+        core.initialize(dummyServer, myApi).then(function(server){
+            expect('not').to.equal('to be here');
+        })
+        .catch(function(err){
+            expect(err.toString()).to.equal('Invalid URI prefix: invalidUri');
+
+        });
+        done();
+        //expect(core.initialize.bind(core, dummyServer, myApi)).to.throw('Invalid URI prefix: invalidUri');
     });
 
-    it('can be initialized with the same parameters on everything!', function () {
+    it('can be initialized with the same parameters on everything!', function (done) {
         const dummyServer = {};
         dummyServer.pre = sinon.spy();
         dummyServer.use = sinon.spy();
@@ -141,16 +156,21 @@ describe('TransomCore', function () {
             };
         })
 
-        const server = core.initialize(dummyServer, myApi);
-        expect(dummyServer.pre.calledOnce).to.be.true;
-        // Every entry in the transom node should result in a call to server.use
-        // plus 1 extra for the req.locals middleware that's always called.
-        expect(dummyServer.use.callCount).to.equal(Object.keys(myApi.transom).length + 1);
-        // Cors preflight calls serve.pre
-        expect(dummyServer.pre.calledOnce).to.be.true;
+        core.initialize(dummyServer, myApi).then(function(server){
+            expect(dummyServer.pre.calledOnce).to.be.true;
+            // Every entry in the transom node should result in a call to server.use
+            // plus 1 extra for the req.locals middleware that's always called.
+            expect(dummyServer.use.callCount).to.equal(Object.keys(myApi.transom).length + 1);
+            // Cors preflight calls serve.pre
+            expect(dummyServer.pre.calledOnce).to.be.true;
+        })
+        .catch(function(err){
+            expect(err.toString()).to.equal('no error');
+        });
+        done();
     });
 
-    it('can throw errors if a plugin fails', function () {
+    it('can throw errors if a plugin fails', function (done) {
         const dummyServer = {};
         dummyServer.pre = sinon.spy();
         dummyServer.use = sinon.spy();
@@ -164,7 +184,14 @@ describe('TransomCore', function () {
         const dummyModule = new DummyModule();
 
         core.configure(dummyModule, {});
-        expect(core.initialize.bind(core, dummyServer, {})).to.throw('Dummy error');
+        //expect(core.initialize.bind(core, dummyServer, {})).to.throw('Dummy error');
+        core.initialize(dummyServer, {}).then(function(server){
+            expect('not').to.equal('to be here');
+        })
+        .catch(function(err){
+            expect(err.toString()).to.equal('Dummy Error');
+        });
+        done();
     });
 
     it('can initialize with an empty api definition', function () {
