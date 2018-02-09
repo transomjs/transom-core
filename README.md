@@ -87,7 +87,7 @@ transom.initialize(server, myApi);
 
 ## What does the metadata look like?
 
-If you can create simple JavaScript Objects, you can handle the metadata. By using JavaScript Objects, we can piece together bits of metadata from just about anywhere. 
+If you can create [simple JavaScript Objects](https://github.com/4umfreak/transom-mongoose-example/blob/master/myApi.js), you can handle the metadata. By using JavaScript Objects, we can piece together bits of metadata from just about anywhere. 
 
 ## Configuring Transom-Core
 
