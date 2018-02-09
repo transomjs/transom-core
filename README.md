@@ -69,6 +69,7 @@ We've created a few small apis to demonstrate the usage of individual plugins:
 * https://github.com/4umfreak/transom-smtp-example
 * https://github.com/4umfreak/transom-mongoose-example
 * https://github.com/binaryops-wiebo/transom-functions-simple-example
+* https://github.com/binaryops-wiebo/transom-functions-secured-example
 
 ...more coming soon ...
 
