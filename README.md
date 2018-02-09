@@ -46,19 +46,20 @@ transom.configure(transomMongoose, {
 });
 
 // Initialize all modules at once, returning a Restify server instance.
-const server = transom.initialize(myApi);
+transom.initialize(myApi).then(function(server){
 
-// Add any additional routes as necessary.
-server.get('/hello', function (req, res, next) {
-  res.json({hello: 'world'});
-  next();
-});
+	// Add any additional routes as necessary.
+	server.get('/hello', function (req, res, next) {
+	  res.json({hello: 'world'});
+	  next();
+	});
 
-// Add your own Error handlers
+	// Add your own Error handlers
 
-// Start the server!
-server.listen(7000, function () {
-	console.log('%s listening at %s', server.name, server.url);
+	// Start the server!
+	server.listen(7000, function () {
+		console.log('%s listening at %s', server.name, server.url);
+	});
 });
 ```
 
