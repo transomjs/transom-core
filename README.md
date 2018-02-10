@@ -22,7 +22,7 @@ $ npm install --save @transomjs/transom-core
 ## Usage Example
 #### myApi.js
 An API definition is quite simply a JavaScript Object. It can be a single file, but it doesn't need to be. Break it up into logical pieces as needed or as your project grows. 
- * [transom-mongoose-example](https://github.com/4umfreak/transom-mongoose-example/blob/master/myApi.js)
+ * Checkout the API definition file from our <a target="_blank" href="https://github.com/4umfreak/transom-mongoose-example/blob/master/myApi.js">transom-mongoose-example</a> app.
  
 #### index.js
 The following simple example is the `index.js` file from a REST API built with Transom. 
