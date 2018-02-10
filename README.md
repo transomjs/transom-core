@@ -20,13 +20,16 @@ $ npm install --save @transomjs/transom-core
 ```
 
 ## Usage Example
-
+#### myApi.js
+An API definition is quite simply a JavaScript Object. It can be a single file, but it doesn't need to be. Break it up into logical pieces as needed or as your project grows. 
+ * [transom-mongoose-example](https://github.com/4umfreak/transom-mongoose-example/blob/master/myApi.js)
+ 
+#### index.js
 The following simple example is the `index.js` file from a REST API built with Transom. 
-
 * Import the Transom-core and create a new instance.
 * Import and configure any Transom modules.
 * Import your API definition; This is the metadata that defines your API.
-* Call transom.initialize() with your metadata object. It will return a restify server.
+* Call transom.initialize() with your metadata object. It will return a Promise that resolves to your Restify server.
 * Call server.listen()
 
 ```javascript
