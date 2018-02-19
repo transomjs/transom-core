@@ -74,9 +74,7 @@ We've created a few small apis to demonstrate the usage of individual plugins:
 * https://github.com/4umfreak/transom-mongoose-example
 * https://github.com/binaryops-wiebo/transom-functions-simple-example
 * https://github.com/binaryops-wiebo/transom-functions-secured-example
-
-...more coming soon ...
-
+* https://github.com/binaryops-wiebo/transom-socketio-internal-example
 
 ## Want to add something before the Transom plugins?
 That's easy too. Simply create your own server instance and pass it to Transom after it's been initilized.
