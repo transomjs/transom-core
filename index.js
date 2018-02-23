@@ -1,12 +1,13 @@
 'use strict';
 
+const corsMiddleware = require('restify-cors-middleware');
 const debug = require('debug')('transom:core');
 const favicon = require('serve-favicon');
 const path = require('path');
 const restify = require('restify');
 const restifyPlugins = require('restify').plugins;
+const semver = require('semver');
 const PocketRegistry = require('pocket-registry');
-const corsMiddleware = require('restify-cors-middleware');
 
 function TransomCore() {
 
@@ -22,7 +23,14 @@ function TransomCore() {
 	};
 
 	this.initialize = function (server, options) {
-		return new Promise(function(resolve, reject){
+		return new Promise(function (resolve, reject) {
+
+			// Fail nicely on old versions of Node.
+			const minNodeVersion = '6.9.0';
+			if (semver.lte(process.version, minNodeVersion)) {
+				throw new Error(`TransomJS doesn't support NodeJS versions older than ${minNodeVersion}, currently running ${process.version}.`);
+			}
+
 			// Allow users to create their own Server & pass it in along with an options object.
 			if (!options) {
 				debug('Creating new Restify server');
@@ -45,7 +53,7 @@ function TransomCore() {
 				throw new Error(`Invalid URI prefix: ${prefix}`);
 			}
 			debug('Using URI prefix:', prefix);
-			
+
 
 			// Setup a Bunyan logger with request details.
 			const requestLoggerOpts = server.registry.get('transom-config.transom.requestLogger', {});
@@ -134,30 +142,37 @@ function TransomCore() {
 				}
 			}
 
-			Promise.all(pluginInitPromises).then(function(data){
-				//all the initialize is done here
-				// run preStart each registered plugin, in the order they've been added.
-				const preStartPromises = [];
-				for (const each of plugins) {
-					if (each.plugin.preStart){
-						debug('Prestarting Transom plugin:', each.plugin.constructor.name);
-						preStartPromises.push(each.plugin.preStart(server, each.options));
-					}
-				};
-				Promise.all(preStartPromises).then(function(data){
-					resolve(server);
+			Promise.all(pluginInitPromises).then(function (data) {
+					// All the initialize is done here
+					// run preStart each registered plugin, in the order they've been added.
+					const preStartPromises = [];
+					for (const each of plugins) {
+						if (each.plugin.preStart) {
+							debug('Prestarting Transom plugin:', each.plugin.constructor.name);
+							preStartPromises.push(each.plugin.preStart(server, each.options));
+						}
+					};
+					Promise.all(preStartPromises).then(function (data) {
+							// Log all the routes to the debug output.
+							Object.keys(server.router.mounts).forEach(function (key, index) {
+								const mount = server.router.mounts[key];
+								if (mount.spec) {
+									debug(mount.spec.method, '\t', mount.spec.path);
+								}
+							});
+							resolve(server);
+						})
+						.catch(function (err) {
+							console.log("transom:core Error prestarting the plugins", err);
+							reject(err);
+						});
 				})
-				.catch(function(err){
-					console.log("transom:core Error prestarting the plugins", err);
+				.catch(function (err) {
+					console.log('transom:core Error initializing plugins ', err);
 					reject(err);
-				});
-			})
-			.catch(function(err){
-				console.log('transom:core Error initializing plugins ', err);
-				reject(err);
-			})
-			
-		});	
+				})
+
+		});
 	};
 };
 
