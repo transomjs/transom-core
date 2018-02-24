@@ -154,12 +154,14 @@ function TransomCore() {
 					};
 					Promise.all(preStartPromises).then(function (data) {
 							// Log all the routes to the debug output.
-							Object.keys(server.router.mounts).forEach(function (key, index) {
-								const mount = server.router.mounts[key];
-								if (mount.spec) {
-									debug(mount.spec.method, '\t', mount.spec.path);
-								}
-							});
+							if (server.router && server.router.mounts) {
+								Object.keys(server.router.mounts).forEach(function (key) {
+									const mount = server.router.mounts[key];
+									if (mount.spec) {
+										debug(`${mount.spec.method}\t${mount.spec.path}`);
+									}
+								});
+							}
 							resolve(server);
 						})
 						.catch(function (err) {
