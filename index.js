@@ -137,7 +137,7 @@ function TransomCore() {
 					debug('Initializing Transom plugin:', each.plugin.constructor.name);
 					pluginInitPromises.push(each.plugin.initialize(server, each.options));
 				} catch (err) {
-					debug("Transom core initialize failed!", err);
+					debug("Initialize failed!", err);
 					throw err;
 				}
 			}
@@ -153,8 +153,8 @@ function TransomCore() {
 						}
 					};
 					Promise.all(preStartPromises).then(function (data) {
-							// Log all the routes to the debug output.
-							if (server.router && server.router.mounts) {
+							// Log all the routes to the debug output, if enabled.
+							if (debug.enabled && server.router && server.router.mounts) {
 								Object.keys(server.router.mounts).forEach(function (key) {
 									const mount = server.router.mounts[key];
 									if (mount.spec) {
@@ -162,18 +162,13 @@ function TransomCore() {
 									}
 								});
 							}
+							debug('Transom plugins initialized');
 							resolve(server);
-						})
-						.catch(function (err) {
-							console.log("transom:core Error prestarting the plugins", err);
-							reject(err);
 						});
-				})
-				.catch(function (err) {
-					console.log('transom:core Error initializing plugins ', err);
-					reject(err);
-				})
-
+				});
+		}).catch(function (err) {
+			console.log('transom:core Error initializing plugins ', err);
+			throw err;
 		});
 	};
 };
