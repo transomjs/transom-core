@@ -8,6 +8,7 @@ const restify = require('restify');
 const restifyPlugins = require('restify').plugins;
 const semver = require('semver');
 const PocketRegistry = require('pocket-registry');
+const bunyan = require("bunyan");
 
 function TransomCore() {
 
@@ -37,6 +38,10 @@ function TransomCore() {
 				options = server || {};
 				server = restify.createServer();
 			}
+			const myLogger = bunyan.createLogger(options.logOptions);
+			const req_log = restify.plugins.requestLogger({log:myLogger});
+			server.use(req_log);
+			server.log = myLogger;
 
 			// Put the transom configuration and API definition into a global registry.
 			server.registry = new PocketRegistry();
@@ -53,14 +58,6 @@ function TransomCore() {
 				throw new Error(`Invalid URI prefix: ${prefix}`);
 			}
 			debug('Using URI prefix:', prefix);
-
-
-			// Setup a Bunyan logger with request details.
-			const requestLoggerOpts = server.registry.get('transom-config.transom.requestLogger', {});
-			if (requestLoggerOpts) {
-				debug('Adding Restify RequestLogger plugin');
-				server.use(restifyPlugins.requestLogger(requestLoggerOpts));
-			}
 
 			// Use CORS for handling cross-domain ajax requests.
 			const corsOptions = server.registry.get('transom-config.transom.cors', {});
