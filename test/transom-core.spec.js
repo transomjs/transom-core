@@ -113,6 +113,41 @@ describe('TransomCore', function () {
         });
     });
 
+    it.only('can be initialized with a specific log stream', function (done) {
+        const dummyServer = {};
+        dummyServer.pre = sinon.spy();
+        dummyServer.use = sinon.spy();
+
+        const myApi = {
+            transom: TRANSOM,
+            logOptions: {
+                name: 'testLogger',
+                streams: [
+                    {
+                        stream: process.stdout,
+                        level: "debug"
+                    }
+                ]
+            }
+        };
+
+        Object.keys(myApi.transom).map(function (key) {
+            myApi.transom[key] = {};
+        })
+
+        core.initialize(dummyServer, myApi).then(function(server){
+        
+            expect(dummyServer.log).to.be.an('object');
+            expect(dummyServer.log.info).to.be.a('function');
+
+            dummyServer.log.debug('Message to process standard out stream');
+
+            done();
+        }).catch( err => {
+            done(err);
+        });
+    });
+
     it('validates the URI prefix on initialize', function (done) {
         const dummyServer = {};
         dummyServer.pre = sinon.spy();
@@ -177,9 +212,13 @@ describe('TransomCore', function () {
 
         // Create a module and options for initializing
         const DummyModule = function (server, options) {
-            this.initialize = sinon.spy(function (server, options) {
-                throw new Error('Dummy error');
-            });
+            this.initialize = function (server, options) {
+                return new Promise((resolve, reject) => {
+                    throw new Error('Dummy Error') ;
+                });
+                // throw new Error('Dummy Error');
+                
+            };
         };
         const dummyModule = new DummyModule();
 
@@ -187,11 +226,13 @@ describe('TransomCore', function () {
         //expect(core.initialize.bind(core, dummyServer, {})).to.throw('Dummy error');
         core.initialize(dummyServer, {}).then(function(server){
             expect('not').to.equal('to be here');
+            done();
         })
-        .catch(function(err){
-            expect(err.toString()).to.equal('Dummy Error');
+        .catch(function(err) {
+            expect(err.toString()).to.equal('Error: Dummy Error');
+            done();
         });
-        done();
+        
     });
 
     it('can initialize with an empty api definition', function () {
