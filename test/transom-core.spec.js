@@ -113,7 +113,7 @@ describe('TransomCore', function () {
         });
     });
 
-    it.only('can be initialized with a specific log stream', function (done) {
+    it('can be initialized with a specific log stream', function (done) {
         const dummyServer = {};
         dummyServer.pre = sinon.spy();
         dummyServer.use = sinon.spy();
