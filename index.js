@@ -1,5 +1,6 @@
 'use strict';
 
+const bunyan = require('bunyan');
 const corsMiddleware = require('restify-cors-middleware');
 const debug = require('debug')('transom:core');
 const favicon = require('serve-favicon');
@@ -8,7 +9,6 @@ const restify = require('restify');
 const restifyPlugins = require('restify').plugins;
 const semver = require('semver');
 const PocketRegistry = require('pocket-registry');
-const bunyan = require("bunyan");
 
 function TransomCore() {
 
@@ -32,16 +32,31 @@ function TransomCore() {
 				throw new Error(`TransomJS doesn't support NodeJS versions older than ${minNodeVersion}, currently running ${process.version}.`);
 			}
 
+			let bunyanLogger;
 			// Allow users to create their own Server & pass it in along with an options object.
 			if (!options) {
 				debug('Creating new Restify server');
 				options = server || {};
-				server = restify.createServer();
+				if (options.transom && options.transom.requestLogger !== false) {
+					const requestLoggerOpts = options.transom.requestLogger || {};
+					requestLoggerOpts.name = requestLoggerOpts.name || 'TransomJS';
+					// Use the provided logger, or create a default one.
+					bunyanLogger = requestLoggerOpts.log || bunyan.createLogger(requestLoggerOpts);
+				}
+				server = restify.createServer({
+					log: bunyanLogger
+				});
+			} else {
+				debug(`Using the provided Restify server and it's logger`);
+				bunyanLogger = server.log;
 			}
-			const myLogger = bunyan.createLogger(options.logOptions);
-			const req_log = restify.plugins.requestLogger({log:myLogger});
-			server.use(req_log);
-			server.log = myLogger;
+
+			// Apply the requestLogger, unless set to false!
+			if (options.transom.requestLogger !== false) {
+				server.use(restify.plugins.requestLogger({
+					log: bunyanLogger
+				}));
+			}
 
 			// Put the transom configuration and API definition into a global registry.
 			server.registry = new PocketRegistry();
@@ -140,29 +155,29 @@ function TransomCore() {
 			}
 
 			Promise.all(pluginInitPromises).then(function (data) {
-					// All the initialize is done here
-					// run preStart each registered plugin, in the order they've been added.
-					const preStartPromises = [];
-					for (const each of plugins) {
-						if (each.plugin.preStart) {
-							debug('Prestarting Transom plugin:', each.plugin.constructor.name);
-							preStartPromises.push(each.plugin.preStart(server, each.options));
-						}
-					};
-					Promise.all(preStartPromises).then(function (data) {
-							// Log all the routes to the debug output, if enabled.
-							if (debug.enabled && server.router && server.router.mounts) {
-								Object.keys(server.router.mounts).forEach(function (key) {
-									const mount = server.router.mounts[key];
-									if (mount.spec) {
-										debug(`${mount.spec.method}\t${mount.spec.path}`);
-									}
-								});
+				// All the initialize is done here
+				// run preStart each registered plugin, in the order they've been added.
+				const preStartPromises = [];
+				for (const each of plugins) {
+					if (each.plugin.preStart) {
+						debug('Prestarting Transom plugin:', each.plugin.constructor.name);
+						preStartPromises.push(each.plugin.preStart(server, each.options));
+					}
+				};
+				Promise.all(preStartPromises).then(function (data) {
+					// Log all the routes to the debug output, if enabled.
+					if (debug.enabled && server.router && server.router.mounts) {
+						Object.keys(server.router.mounts).forEach(function (key) {
+							const mount = server.router.mounts[key];
+							if (mount.spec) {
+								debug(`${mount.spec.method}\t${mount.spec.path}`);
 							}
-							debug('Transom plugins initialized');
-							resolve(server);
 						});
+					}
+					debug('Transom plugins initialized');
+					resolve(server);
 				});
+			});
 		}).catch(function (err) {
 			console.log('transom:core Error initializing plugins ', err);
 			throw err;
