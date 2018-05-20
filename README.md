@@ -148,7 +148,7 @@ transom: {
 	}
 }
 ```
-* Define a custom Bunyan logger, Restify will create a new Bunyan logger using your configuration.
+* Define a custom [Bunyan logger](https://www.npmjs.com/package/bunyan), Restify will create a new Bunyan logger using your configuration.
 ```javascript
 transom: {
 	requestLogger: {
