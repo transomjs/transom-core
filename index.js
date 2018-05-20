@@ -52,7 +52,7 @@ function TransomCore() {
 			}
 
 			// Apply the requestLogger, unless set to false!
-			if (options.transom.requestLogger !== false) {
+			if (options.transom && options.transom.requestLogger !== false) {
 				server.use(restify.plugins.requestLogger({
 					log: bunyanLogger
 				}));
