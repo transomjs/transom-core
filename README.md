@@ -132,6 +132,36 @@ const myApi = {
 
 #### requestLogger
 http://restify.com/docs/plugins-api/#requestlogger
+The `requestLogger` option can be used a number of ways depending on your need to customize logging within your API.
+
+* Disable request logging by setting `requestLogger` to false. TransomJS will defer to Restify's default logger but log output will not include a unique `req_id` on each individual request.
+```javascript
+transom: {
+	requestLogger: false
+}
+```
+* Create your own Bunyan logger object and pass it in as `log`. Restify will use your logger and include a unique `req_id` on each individual request.
+```javascript
+transom: {
+	requestLogger: {
+		log: myCustomBunyan
+	}
+}
+```
+* Define a custom Bunyan logger, Restify will create a new Bunyan logger using your configuration.
+```javascript
+transom: {
+	requestLogger: {
+		name: 'MyTestLogger',
+		streams: [
+			{
+				stream: process.stdout,
+				level: "debug"
+			}
+		]
+	}
+}
+```
 
 #### cors
 https://www.npmjs.com/package/restify-cors-middleware
