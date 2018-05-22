@@ -162,10 +162,9 @@ describe('TransomCore', function () {
             expect('not').to.equal('to be here');
         })
         .catch(function(err){
-            expect(err.toString()).to.equal('Invalid URI prefix: invalidUri');
+            expect(err.toString()).to.equal('Error: Invalid URI prefix: invalidUri');
             done();
         });
-        //expect(core.initialize.bind(core, dummyServer, myApi)).to.throw('Invalid URI prefix: invalidUri');
     });
 
     it('can be initialized with the same parameters on everything!', function (done) {
@@ -226,7 +225,7 @@ describe('TransomCore', function () {
             });
     });
 
-    it.only('can throw errors if a plugin doesn\'t return Promise', function (done) {
+    it('can throw errors if a plugin doesn\'t return Promise', function (done) {
         const dummyServer = {};
         dummyServer.pre = sinon.spy();
         dummyServer.use = sinon.spy();
