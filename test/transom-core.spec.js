@@ -118,23 +118,20 @@ describe('TransomCore', function () {
         dummyServer.pre = sinon.spy();
         dummyServer.use = sinon.spy();
 
-        const myApi = {
-            transom: TRANSOM,
-            logOptions: {
-                name: 'testLogger',
-                streams: [
-                    {
-                        stream: process.stdout,
-                        level: "debug"
-                    }
-                ]
-            }
+        const transomOpts = Object.assign({}, TRANSOM);
+        transomOpts.requestLogger = {
+            name: 'testLogger',
+            streams: [
+                {
+                    stream: process.stdout,
+                    level: "debug"
+                }
+            ]
         };
 
-        Object.keys(myApi.transom).map(function (key) {
-            myApi.transom[key] = {};
-        })
-
+        const myApi = {
+            transom: transomOpts
+        };
         core.initialize(dummyServer, myApi).then(function(server){
         
             expect(dummyServer.log).to.be.an('object');
@@ -166,9 +163,8 @@ describe('TransomCore', function () {
         })
         .catch(function(err){
             expect(err.toString()).to.equal('Invalid URI prefix: invalidUri');
-
+            done();
         });
-        done();
         //expect(core.initialize.bind(core, dummyServer, myApi)).to.throw('Invalid URI prefix: invalidUri');
     });
 
@@ -213,26 +209,46 @@ describe('TransomCore', function () {
         // Create a module and options for initializing
         const DummyModule = function (server, options) {
             this.initialize = function (server, options) {
-                return new Promise((resolve, reject) => {
-                    throw new Error('Dummy Error') ;
-                });
-                // throw new Error('Dummy Error');
-                
+                return Promise.reject('Dummy Error');
             };
         };
         const dummyModule = new DummyModule();
 
         core.configure(dummyModule, {});
-        //expect(core.initialize.bind(core, dummyServer, {})).to.throw('Dummy error');
-        core.initialize(dummyServer, {}).then(function(server){
-            expect('not').to.equal('to be here');
-            done();
-        })
-        .catch(function(err) {
-            expect(err.toString()).to.equal('Error: Dummy Error');
-            done();
-        });
-        
+        core.initialize(dummyServer, {})
+            .then(function(server){
+                expect('not').to.equal('to be here');
+                done();
+            })
+            .catch(function(err) {
+                expect(err.toString()).to.equal('Dummy Error');
+                done();
+            });
+    });
+
+    it.only('can throw errors if a plugin doesn\'t return Promise', function (done) {
+        const dummyServer = {};
+        dummyServer.pre = sinon.spy();
+        dummyServer.use = sinon.spy();
+
+        // Create a module and options for initializing
+        const DummyModule = function (server, options) {
+            this.initialize = function (server, options) {
+                throw new Error('my plugin is invalid.');
+            };
+        };
+        const dummyModule = new DummyModule();
+
+        core.configure(dummyModule, {});
+        core.initialize(dummyServer, {})
+            .then(function(server){
+                expect('not').to.equal('to be here');
+                done();
+            })
+            .catch(function(err) {
+                expect(err.toString()).to.equal('Error: my plugin is invalid.');
+                done();
+            });
     });
 
     it('can initialize with an empty api definition', function () {

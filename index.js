@@ -23,6 +23,17 @@ function TransomCore() {
 		});
 	};
 
+	function createLogger(options) {
+		let bunyanLogger;
+		if (options.transom && options.transom.requestLogger) {
+			const requestLoggerOpts = options.transom.requestLogger || {};
+			requestLoggerOpts.name = requestLoggerOpts.name || 'TransomJS';
+			// Use the provided logger, or create a default one.
+			bunyanLogger = requestLoggerOpts.log || bunyan.createLogger(requestLoggerOpts);
+		}
+		return bunyanLogger;
+	}
+
 	this.initialize = function (server, options) {
 		return new Promise(function (resolve, reject) {
 
@@ -32,29 +43,26 @@ function TransomCore() {
 				throw new Error(`TransomJS doesn't support NodeJS versions older than ${minNodeVersion}, currently running ${process.version}.`);
 			}
 
-			let bunyanLogger;
 			// Allow users to create their own Server & pass it in along with an options object.
 			if (!options) {
 				debug('Creating new Restify server');
 				options = server || {};
-				if (options.transom && options.transom.requestLogger !== false) {
-					const requestLoggerOpts = options.transom.requestLogger || {};
-					requestLoggerOpts.name = requestLoggerOpts.name || 'TransomJS';
-					// Use the provided logger, or create a default one.
-					bunyanLogger = requestLoggerOpts.log || bunyan.createLogger(requestLoggerOpts);
-				}
+
 				server = restify.createServer({
-					log: bunyanLogger
+					log: createLogger(options)
 				});
 			} else {
-				debug(`Using the provided Restify server and it's logger`);
-				bunyanLogger = server.log;
+				debug(`Using the provided Restify server`);
+				const tmpLogger = createLogger(options);
+				if (tmpLogger) {
+					server.log = tmpLogger;
+				}
 			}
 
 			// Apply the requestLogger, unless set to false!
 			if (options.transom && options.transom.requestLogger !== false) {
 				server.use(restify.plugins.requestLogger({
-					log: bunyanLogger
+					log: server.log
 				}));
 			}
 
@@ -145,13 +153,8 @@ function TransomCore() {
 			// Configure each registered plugin, in the order they've been added.
 			const pluginInitPromises = []
 			for (const each of plugins) {
-				try {
-					debug('Initializing Transom plugin:', each.plugin.constructor.name);
-					pluginInitPromises.push(each.plugin.initialize(server, each.options));
-				} catch (err) {
-					debug("Initialize failed!", err);
-					throw err;
-				}
+				debug('Initializing Transom plugin:', each.plugin.constructor.name);
+				pluginInitPromises.push(each.plugin.initialize(server, each.options));
 			}
 
 			Promise.all(pluginInitPromises).then(function (data) {
@@ -177,10 +180,10 @@ function TransomCore() {
 					debug('Transom plugins initialized');
 					resolve(server);
 				});
+			}).catch(function (err) {
+				console.error('transom:core Error initializing plugins ', err);
+				reject(err);
 			});
-		}).catch(function (err) {
-			console.log('transom:core Error initializing plugins ', err);
-			throw err;
 		});
 	};
 };
