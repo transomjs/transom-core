@@ -12,6 +12,9 @@ const PocketRegistry = require('pocket-registry');
 
 function TransomCore() {
 
+	// Put the registry on transomCore right away.
+	this.registry = new PocketRegistry();
+
 	const plugins = [];
 
 	this.configure = function (plugin, options) {
@@ -35,6 +38,7 @@ function TransomCore() {
 	}
 
 	this.initialize = function (server, options) {
+		const self = this;
 		return new Promise(function (resolve, reject) {
 
 			// Fail nicely on old versions of Node.
@@ -52,12 +56,15 @@ function TransomCore() {
 					log: createLogger(options)
 				});
 			} else {
-				debug(`Using the provided Restify server`);
+				debug('Using the provided Restify server');
 				const tmpLogger = createLogger(options);
 				if (tmpLogger) {
 					server.log = tmpLogger;
 				}
 			}
+
+			// Put the Transom registry onto the Restify server.
+			server.registry = self.registry;
 
 			// Apply the requestLogger, unless set to false!
 			if (options.transom && options.transom.requestLogger !== false) {
@@ -67,7 +74,6 @@ function TransomCore() {
 			}
 
 			// Put the transom configuration and API definition into a global registry.
-			server.registry = new PocketRegistry();
 			server.registry.set('transom-config', options);
 
 			// Make sure we use the same default URI prefix everywhere.
@@ -76,7 +82,6 @@ function TransomCore() {
 			}
 			// Confirm that the URI prefix starts with a /, but doesn't end in one.
 			const prefix = server.registry.get('transom-config.definition.uri.prefix');
-			debug('Using URI prefix:', prefix, prefix.length, prefix[0], prefix[prefix.length - 1]);
 			if (!(prefix.length > 0 && prefix[0] === '/' && prefix[prefix.length - 1] !== '/')) {
 				throw new Error(`Invalid URI prefix: ${prefix}`);
 			}

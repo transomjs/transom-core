@@ -84,6 +84,22 @@ describe('TransomCore', function () {
         
     });
 
+    it('copies the transom registry to the server', function (done) {
+        const dummyServer = {};
+        dummyServer.name = "dummyServer";
+        dummyServer.registry = {}; // gets replaced!
+        dummyServer.pre = sinon.spy();
+        dummyServer.use = sinon.spy();
+
+        const myApi = {};
+
+        core.initialize(dummyServer, myApi).then(function(server){
+            expect(server.name).to.equal('dummyServer');
+            expect(server.registry.constructor.name).to.equal('PocketRegistry');
+            done();
+        });
+    });
+
     it('can be initialized with defaults on everything', function (done) {
         const dummyServer = {};
         dummyServer.pre = sinon.spy();
