@@ -4,6 +4,7 @@
   "description": "A low-code REST API framework",
   "main": "index.js",
   "scripts": {
+    "deploy": "np",
     "test": "cross-env NODE_ENV=test DEBUG='transom:*' nyc mocha",
     "coveralls": "nyc report --reporter=text-lcov | coveralls"
   },
@@ -11,15 +12,17 @@
     "type": "git",
     "url": "git+https://github.com/transomjs/transom-core.git"
   },
-  "keywords": [
-    "REST",
-    "API"
-  ],
-  "author": "BinaryOps Software Inc. <admin@binaryops.ca>",
-  "license": "MIT",
   "bugs": {
     "url": "https://github.com/transomjs/transom-core/issues"
   },
+  "keywords": [
+    "restify",
+    "mongoose",
+    "rest",
+    "rest api"
+  ],
+  "author": "BinaryOps Software Inc. <admin@binaryops.ca>",
+  "license": "MIT",
   "homepage": "https://github.com/transomjs/transom-core#readme",
   "engines": {
     "node": ">= 6.9.0",
