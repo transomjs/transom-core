@@ -35,40 +35,40 @@ module.exports = {
                 return _restify.log = value;
             },
             get(...args) {
-                _restify.get(...args);
+                return _restify.get(...args);
             },
             head(...args) {
-                _restify.head(...args);
+                return _restify.head(...args);
             },
             post(...args) {
-                _restify.post(...args);
+                return _restify.post(...args);
             },
             put(...args) {
-                _restify.put(...args);
+                return _restify.put(...args);
             },
             patch(...args) {
-                _restify.patch(...args);
+                return _restify.patch(...args);
             },
             del(...args) {
-                _restify.del(...args);
+                return _restify.del(...args);
             },
             opts(...args) {
-                _restify.opts(...args);
+                return _restify.opts(...args);
             },
             pre(...args) {
-                _restify.pre(...args);
+                return _restify.pre(...args);
             },
             use(...args) {
-                _restify.use(...args);
+                return _restify.use(...args);
             },
             listen(...args) {
-                _restify.listen(...args);
+                return _restify.listen(...args);
             },
             close(...args) {
-                _restify.listen(...args);
+                return _restify.listen(...args);
             },
             on(...args) {
-                _restify.on(...args);
+                return _restify.on(...args);
             }
         };
         return server;
