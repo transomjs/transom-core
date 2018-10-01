@@ -35,24 +35,31 @@ module.exports = {
                 return _restify.log = value;
             },
             get(...args) {
+                _restify.emit('transom.route.get', args);
                 return _restify.get(...args);
             },
             head(...args) {
+                _restify.emit('transom.route.head', args);
                 return _restify.head(...args);
             },
             post(...args) {
+                _restify.emit('transom.route.post', args);
                 return _restify.post(...args);
             },
             put(...args) {
+                _restify.emit('transom.route.put', args);
                 return _restify.put(...args);
             },
             patch(...args) {
+                _restify.emit('transom.route.patch', args);
                 return _restify.patch(...args);
             },
             del(...args) {
+                _restify.emit('transom.route.del', args);
                 return _restify.del(...args);
             },
             opts(...args) {
+                _restify.emit('transom.route.opts', args);
                 return _restify.opts(...args);
             },
             pre(...args) {
