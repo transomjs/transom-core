@@ -39,6 +39,9 @@
     "sinon": "^6.3.1"
   },
   "dependencies": {
+    "@types/debug": "0.0.30",
+    "@types/restify": "^7.2.4",
+    "@types/restify-cors-middleware": "^1.0.1",
     "debug": "^4.0.1",
     "pocket-registry": "^1.1.1",
     "restify": "^7.2.1",
