@@ -53,7 +53,7 @@ TransomCore.prototype.configure = function (plugin, options) {
 TransomCore.prototype.initialize = function (restifyServer, options) {
 	return new Promise(function (resolve, reject) {
 		// Fail nicely on old versions of Node.
-		const minNodeVersion = '6.9.0';
+		const minNodeVersion = '8.0.0';
 		if (semver.lte(process.version, minNodeVersion)) {
 			throw new Error(`TransomJS doesn't support NodeJS versions older than ${minNodeVersion}, currently running ${process.version}.`);
 		}

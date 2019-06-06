@@ -269,4 +269,42 @@ describe('TransomCore', function () {
     it('can initialize with an empty api definition', function () {
         expect(core.initialize({})).to.exist;
     });
+
+    it.only('can initialize with a non-empty api definition', function (done) {
+        const dummyServer = {};
+        dummyServer.pre = sinon.spy();
+        dummyServer.use = sinon.spy();
+        // dummyServer.emit = sinon.spy();
+        // dummyServer.get = sinon.spy();
+
+        // Create a module and options for initializing
+        const DummyModule = function (server, options) {
+            this.initialize = function (server, options) {
+                // server.get('/foo/bar', sinon.spy());
+                server.router = {
+                    mounts: {
+                        spec: {
+                            method: 'foo',
+                            path: 'bar'
+                        }
+                    }
+                }
+            };
+            this.preStart = function (server, options) {};
+        };
+        const dummyModule = new DummyModule();
+
+        core.configure(dummyModule, {});
+        core.initialize(dummyServer, {})
+            .then(function(server){
+                // expect('not').to.equal('to be here');
+                done();
+            })
+            .catch(function(err) {
+                expect(err.toString()).to.equal('Error: my plugin is invalid.');
+                done();
+            });
+
+    });
+
 });

@@ -79,6 +79,9 @@ describe('TransomCore wrapper', function() {
         // Return the Registry unaltered.
         expect(wrapper.registry).to.equal(registry);
 
+        // Return the Restify instance unwrapped.
+        expect(wrapper.restify).to.equal(restify);
+
         // Set
         wrapper.name = 'Mrs. Red';
         expect(spies['name'].set.callCount).to.equal(1);
