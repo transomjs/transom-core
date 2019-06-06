@@ -72,7 +72,7 @@ module.exports = {
                 return _restify.listen(...args);
             },
             close(...args) {
-                return _restify.listen(...args);
+                return _restify.close(...args);
             },
             on(...args) {
                 return _restify.on(...args);
