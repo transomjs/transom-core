@@ -96,6 +96,10 @@ describe('TransomCore', function () {
         core.initialize(dummyServer, myApi).then(function(server){
             expect(server.name).to.equal('dummyServer');
             expect(server.registry.constructor.name).to.equal('PocketRegistry');
+
+            // Make sure it's a functioning registry
+            server.registry.set("foo", "bar")
+            expect(server.registry.get("foo")).to.equal('bar');
             done();
         });
     });
@@ -270,7 +274,7 @@ describe('TransomCore', function () {
         expect(core.initialize({})).to.exist;
     });
 
-    it.only('can initialize with a non-empty api definition', function (done) {
+    it('can initialize with a non-empty api definition', function (done) {
         const dummyServer = {};
         dummyServer.pre = sinon.spy();
         dummyServer.use = sinon.spy();

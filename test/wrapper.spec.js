@@ -52,7 +52,9 @@ describe('TransomCore wrapper', function() {
         // Define functions
         fxs.map(p => {
             Object.defineProperty(MockRestify.prototype, p, {
-                value: function() {}
+                value: function() {
+                    return `Function name is ${p}.`
+                }
             });
         });
 
@@ -110,10 +112,12 @@ describe('TransomCore wrapper', function() {
         properties.map(p => {
             wrapper[p] = `Hello, My name is property '${p}'`; // setter!
             expect(wrapper[p]).to.equal(`Hello, My name is property '${p}'`); // getter!
+            // Verify that the actual restify property value is same.
+            expect(wrapper.restify[p]).to.equal(`Hello, My name is property '${p}'`);
         });
-        // Make sure each property is called only once.
+        // Make sure each property is called only twice, as above.
         properties.map(p => {
-            expect(spies[p].get.callCount).to.equal(1);
+            expect(`${spies[p].get.callCount}-${p}`).to.equal(`2-${p}`);
         });
 
         // Test the defined functions with a single argument.
@@ -145,7 +149,8 @@ describe('TransomCore wrapper', function() {
             // console.log(fakeArgs);
 
             // Ensure that args are proxied through to restify
-            wrapper[f](...fakeArgs); // call fx!
+            const result = wrapper[f](...fakeArgs); // call fx!
+            expect(result).to.equal(`Function name is ${f}.`);
             expect(spies[f].firstCall.args).to.have.members(fakeArgs);
         });
     });
@@ -159,7 +164,8 @@ describe('TransomCore wrapper', function() {
         // Test the defined functions with a single argument.
         httpMethods.map(h => {
             // Ensure that args are proxied through to restify
-            wrapper[h](`Calling HTTP ${h} method!`); // call the fx!
+            const result = wrapper[h](`Calling HTTP ${h} method!`); // call the fx!
+            expect(result).to.equal(`Function name is ${h}.`);
             expect(spies['emit'].lastCall.args[0]).to.equal(`transom.route.${h}`);
             expect(spies['emit'].lastCall.args[1][0]).to.equal(`Calling HTTP ${h} method!`);
         });
