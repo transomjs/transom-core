@@ -19,6 +19,7 @@ describe('TransomCore', function () {
         cors: false,
         bodyParser: false,
         queryParser: false,
+        cookieParser: false,
         urlEncodedBodyParser: false,
         gzipResponse: false,
         fullResponse: false,
