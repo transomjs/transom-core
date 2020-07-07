@@ -7,6 +7,7 @@ const favicon = require("serve-favicon");
 const path = require("path");
 const restify = require("restify");
 const restifyPlugins = require("restify").plugins;
+const CookieParser = require("restify-cookies");
 const semver = require("semver");
 const PocketRegistry = require("pocket-registry");
 const wrapper = require("./wrapper");
@@ -145,6 +146,13 @@ TransomCore.prototype.initialize = function(restifyServer, options) {
       debug("Adding Restify UrlEncodedBodyParser plugin");
       encBodyOpts.mapParams = encBodyOpts.mapParams === undefined ? true : encBodyOpts.mapParams; // default true
       server.use(restifyPlugins.urlEncodedBodyParser(encBodyOpts));
+    }
+
+    // Parse cookies into the req.cookies object.
+    const cookieParserOpts = server.registry.get("transom-config.transom.cookieParser", {});
+    if (cookieParserOpts) {
+      debug("Adding Restify CookieParser plugin");
+      server.use(CookieParser.parse);
     }
 
     // Compress API responses with gzip.
