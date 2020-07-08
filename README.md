@@ -106,6 +106,7 @@ const myApi = {
 		queryParser: {
 			mapParams: true
 		},
+		cookieParser: {},
 		urlEncodedBodyParser: {
 			mapParams: true
 		},
@@ -164,7 +165,7 @@ transom: {
 ```
 
 #### cors
-https://www.npmjs.com/package/restify-cors-middleware
+https://www.npmjs.com/package/restify-cors-middleware2
 The `authorization` header is added to the `allowHeaders` option automatically as it's required for Bearer authentication.
 The `origins` option is set to a wildcard for easier development and can be set with an environment variable when moving to test or production. Both preflight & actual middleware are applied. Keep in mind that `http://localhost:8100` is different than `http://127.0.0.1:8100` which is again different than `http://[::]:8100` even though they *may* all resolve to the same service. CORs middleware can accept an array of String, or regEx to match acceptable URI patters. See the official documentation for additional details.
 
@@ -177,6 +178,9 @@ A child plugin of the bodyParser. The `mapParams` option is set to true by defau
 
 #### queryParser
 http://restify.com/docs/plugins-api/#queryparser The `mapParams` option is set to true by default.
+
+#### cookieParser
+https://www.npmjs.com/package/restify-cookies Looking for cookies named `access_token` by default.
 
 #### gzipResponse
 http://restify.com/docs/plugins-api/#gzipresponse

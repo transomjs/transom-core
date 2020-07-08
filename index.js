@@ -1,7 +1,7 @@
 "use strict";
 
 const bunyan = require("bunyan");
-const corsMiddleware = require("restify-cors-middleware");
+const corsMiddleware = require("restify-cors-middleware2");
 const debug = require("debug")("transom:core");
 const favicon = require("serve-favicon");
 const path = require("path");
