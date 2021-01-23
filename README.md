@@ -209,3 +209,6 @@ function TransomConsole() {
 }
 module.exports = new TransomConsole();
 ```
+
+## Need Support?
+TransomJS is developed and maintained by [BinaryOps Software Inc.](https://binaryops.ca) in Canada.
