@@ -18,7 +18,8 @@ function createLogger(options) {
     const requestLoggerOpts = options.transom.requestLogger || {};
     requestLoggerOpts.name = requestLoggerOpts.name || "TransomJS";
     // Use the provided logger, or create a default one.
-    bunyanLogger = requestLoggerOpts.log || bunyan.createLogger(requestLoggerOpts);
+    bunyanLogger =
+      requestLoggerOpts.log || bunyan.createLogger(requestLoggerOpts);
   }
   return bunyanLogger;
 }
@@ -41,23 +42,23 @@ function TransomCore() {
 
 Object.defineProperties(TransomCore.prototype, {
   registry: {
-    get: function() {
+    get: function () {
       // Pre-initialize registry access.
       return _registry;
-    }
-  }
+    },
+  },
 });
 
-TransomCore.prototype.configure = function(plugin, options) {
+TransomCore.prototype.configure = function (plugin, options) {
   debug("Adding Transom plugin:", plugin.constructor.name);
   options = options || {};
   _plugins.push({
     plugin,
-    options
+    options,
   });
 };
 
-TransomCore.prototype.initialize = function(restifyServer, options) {
+TransomCore.prototype.initialize = function (restifyServer, options) {
   return new Promise((resolve, reject) => {
     // Fail nicely on old versions of Node.
     const minNodeVersion = "8.0.0";
@@ -73,7 +74,7 @@ TransomCore.prototype.initialize = function(restifyServer, options) {
       options = restifyServer || {};
 
       restifyServer = restify.createServer({
-        log: createLogger(options)
+        log: createLogger(options),
       });
     } else {
       debug("Using the provided Restify server");
@@ -81,6 +82,28 @@ TransomCore.prototype.initialize = function(restifyServer, options) {
       if (tmpLogger) {
         restifyServer.log = tmpLogger;
       }
+    }
+
+    options.transom = options.transom || {};
+
+    // Warn the developer if running with a non-zero timezone offset.
+    const suppressTimezoneWarning =
+      options.transom.suppressTimezoneWarning || false;
+    const offset = new Date().getTimezoneOffset();
+    if (!suppressTimezoneWarning && offset !== 0) {
+      const parts = process.argv[1].split(path.sep);
+      const entryFile = parts[parts.length - 1];
+      const line =
+        "*******************************************************************";
+      const warningMsg = `
+This Node process is running with a timezone offset of ${offset} minutes.
+It's recommended to run the service with an offset of 0 minutes using the
+following line at the top of your ${entryFile} before any Dates are used.
+
+process.env.TZ = 'Etc/GMT';\n`;
+      const yellow = "\x1b[33m%s\x1b[0m";
+      const reset = "\x1b[0m";
+      console.log(yellow, line + warningMsg + line, reset);
     }
 
     // Create a wrapper around Restify, exposing the most common methods
@@ -91,7 +114,7 @@ TransomCore.prototype.initialize = function(restifyServer, options) {
     if (options.transom && options.transom.requestLogger !== false) {
       server.use(
         restify.plugins.requestLogger({
-          log: server.log
+          log: server.log,
         })
       );
     }
@@ -105,7 +128,13 @@ TransomCore.prototype.initialize = function(restifyServer, options) {
     }
     // Confirm that the URI prefix starts with a /, but doesn't end in one.
     const prefix = server.registry.get("transom-config.definition.uri.prefix");
-    if (!(prefix.length > 0 && prefix[0] === "/" && prefix[prefix.length - 1] !== "/")) {
+    if (
+      !(
+        prefix.length > 0 &&
+        prefix[0] === "/" &&
+        prefix[prefix.length - 1] !== "/"
+      )
+    ) {
       throw new Error(`Invalid URI prefix: ${prefix}`);
     }
     debug("Using URI prefix:", prefix);
@@ -116,7 +145,9 @@ TransomCore.prototype.initialize = function(restifyServer, options) {
       debug("Adding CORS handling");
       // Get an array of valid domain names for CORS and handle OPTIONS requests.
       corsOptions.origins = corsOptions.origins || ["*"];
-      corsOptions.allowHeaders = (corsOptions.allowHeaders || []).concat(["authorization"]);
+      corsOptions.allowHeaders = (corsOptions.allowHeaders || []).concat([
+        "authorization",
+      ]);
 
       const cors = corsMiddleware(corsOptions);
       server.pre(cors.preflight);
@@ -124,56 +155,81 @@ TransomCore.prototype.initialize = function(restifyServer, options) {
     }
 
     // Parse body parameters into the req.params object.
-    const bodyOpts = server.registry.get("transom-config.transom.bodyParser", {});
+    const bodyOpts = server.registry.get(
+      "transom-config.transom.bodyParser",
+      {}
+    );
     if (bodyOpts) {
       debug("Adding Restify BodyParser plugin");
-      bodyOpts.mapParams = bodyOpts.mapParams === undefined ? true : bodyOpts.mapParams; // default true
+      bodyOpts.mapParams =
+        bodyOpts.mapParams === undefined ? true : bodyOpts.mapParams; // default true
       bodyOpts.limit = bodyOpts.limit === undefined ? 20000 : bodyOpts.limit; // default 20000
       server.use(restifyPlugins.bodyParser(bodyOpts));
     }
 
     // Parse query parameters into the req.params object.
-    const queryOpts = server.registry.get("transom-config.transom.queryParser", {});
+    const queryOpts = server.registry.get(
+      "transom-config.transom.queryParser",
+      {}
+    );
     if (queryOpts) {
       debug("Adding Restify QueryParser plugin");
-      queryOpts.mapParams = queryOpts.mapParams === undefined ? true : queryOpts.mapParams; // default true
+      queryOpts.mapParams =
+        queryOpts.mapParams === undefined ? true : queryOpts.mapParams; // default true
       server.use(restifyPlugins.queryParser(queryOpts));
     }
 
     // Parse url-encoded forms into the req.params object.
-    const encBodyOpts = server.registry.get("transom-config.transom.urlEncodedBodyParser", {});
+    const encBodyOpts = server.registry.get(
+      "transom-config.transom.urlEncodedBodyParser",
+      {}
+    );
     if (encBodyOpts) {
       debug("Adding Restify UrlEncodedBodyParser plugin");
-      encBodyOpts.mapParams = encBodyOpts.mapParams === undefined ? true : encBodyOpts.mapParams; // default true
+      encBodyOpts.mapParams =
+        encBodyOpts.mapParams === undefined ? true : encBodyOpts.mapParams; // default true
       server.use(restifyPlugins.urlEncodedBodyParser(encBodyOpts));
     }
 
     // Parse cookies into the req.cookies object.
-    const cookieParserOpts = server.registry.get("transom-config.transom.cookieParser", {});
+    const cookieParserOpts = server.registry.get(
+      "transom-config.transom.cookieParser",
+      {}
+    );
     if (cookieParserOpts) {
       debug("Adding Restify CookieParser plugin");
       server.use(CookieParser.parse);
     }
 
     // Compress API responses with gzip.
-    const gzipOpts = server.registry.get("transom-config.transom.gzipResponse", {});
+    const gzipOpts = server.registry.get(
+      "transom-config.transom.gzipResponse",
+      {}
+    );
     if (gzipOpts) {
       debug("Adding Restify GzipResponse plugin");
       server.use(restifyPlugins.gzipResponse(gzipOpts));
     }
 
     // Use fullResponse, adding a bunch of Headers to the response.
-    const fullOpts = server.registry.get("transom-config.transom.fullResponse", {});
+    const fullOpts = server.registry.get(
+      "transom-config.transom.fullResponse",
+      {}
+    );
     if (fullOpts) {
       debug("Adding Restify FullResponse plugin");
       server.use(restifyPlugins.fullResponse(fullOpts));
     }
 
     // Provide a transom icon for API GET requests from a browser.
-    const faviconOpts = server.registry.get("transom-config.transom.favicon", {});
+    const faviconOpts = server.registry.get(
+      "transom-config.transom.favicon",
+      {}
+    );
     if (faviconOpts) {
       debug("Adding Favicon support");
-      faviconOpts.path = faviconOpts.path || path.join(__dirname, "images", "favicon.ico");
+      faviconOpts.path =
+        faviconOpts.path || path.join(__dirname, "images", "favicon.ico");
       server.use(favicon(faviconOpts.path));
     }
 
@@ -189,7 +245,9 @@ TransomCore.prototype.initialize = function(restifyServer, options) {
     const pluginInitPromises = [];
     for (const each of _plugins) {
       debug("Initializing Transom plugin:", each.plugin.constructor.name);
-      pluginInitPromises.push(() => each.plugin.initialize(server, each.options));
+      pluginInitPromises.push(() =>
+        each.plugin.initialize(server, each.options)
+      );
     }
 
     // All the initialize is done here
@@ -200,7 +258,9 @@ TransomCore.prototype.initialize = function(restifyServer, options) {
         for (const each of _plugins) {
           if (each.plugin.preStart) {
             debug("Prestarting Transom plugin:", each.plugin.constructor.name);
-            preStartPromises.push(() => each.plugin.preStart(server, each.options));
+            preStartPromises.push(() =>
+              each.plugin.preStart(server, each.options)
+            );
           }
         }
         return serial(preStartPromises);
@@ -208,7 +268,7 @@ TransomCore.prototype.initialize = function(restifyServer, options) {
       .then(() => {
         // Log all the routes to the debug output, if enabled.
         if (debug.enabled && server.router && server.router.mounts) {
-          Object.keys(server.router.mounts).forEach(key => {
+          Object.keys(server.router.mounts).forEach((key) => {
             const mount = server.router.mounts[key];
             if (mount.spec) {
               debug(`${mount.spec.method}\t${mount.spec.path}`);
@@ -218,7 +278,7 @@ TransomCore.prototype.initialize = function(restifyServer, options) {
         debug("Transom plugins initialized");
         resolve(server);
       })
-      .catch(err => {
+      .catch((err) => {
         console.error("transom:core Error initializing plugins ", err);
         reject(err);
       });
