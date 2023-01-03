@@ -76,6 +76,25 @@ module.exports = {
             },
             on(...args) {
                 return _restify.on(...args);
+            },
+            param(...args) {
+                return _restify.param(...args);
+            }, 
+            rm(...args) {
+                _restify.emit('transom.route.rm', args);
+                return _restify.rm(...args);
+            }, 
+            address() {
+                return _restify.address();
+            }, 
+            inflightRequests() {
+                return _restify.inflightRequests();
+            }, 
+            getDebugInfo() {
+                return _restify.getDebugInfo();
+            }, 
+            toString() {
+                return _restify.toString();
             }
         };
         return server;
