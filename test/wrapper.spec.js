@@ -1,5 +1,4 @@
 'use strict';
-const expect = require('chai').expect;
 const sinon = require('sinon');
 const Wrapper = require('../wrapper');
 
@@ -27,7 +26,13 @@ describe('TransomCore wrapper', function() {
         'on'
     ];
     let restify;
+    let expect;
     let spies;
+
+    before(() => {
+        // Use a dynamic import for the chai ES module!
+        return import("chai").then((chai) => (expect = chai.expect));
+    });
 
     beforeEach(function() {
         function MockRestify() {}

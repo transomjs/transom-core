@@ -1,5 +1,4 @@
 "use strict";
-const expect = require('chai').expect;
 const path = require('path');
 const sinon = require('sinon');
 const restifyErrors = require('restify-errors');
@@ -8,6 +7,7 @@ const TransomCore = require('../');
 describe('TransomCore', function () {
 
     let core;
+    let expect;
     const DummyModule = function (server, options) {
         this.initialize = sinon.spy(function (server, options) {
             server.dummy = options;
@@ -25,6 +25,11 @@ describe('TransomCore', function () {
         fullResponse: false,
         favicon: false
     };
+
+    before(() => {
+        // Use a dynamic import for the chai ES module!
+        return import("chai").then((chai) => (expect = chai.expect));
+    });   
 
     beforeEach(function () {
         core = new TransomCore();

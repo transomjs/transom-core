@@ -1,5 +1,8 @@
 # @transomjs/transom-core change log
 
+## 2.0.7
+- More updates
+
 ## 2.0.3
 - Added the CookieParser for use with cookie based JWTs. Updated deps.
 
