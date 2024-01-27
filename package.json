@@ -1,6 +1,6 @@
 {
   "name": "@transomjs/transom-core",
-  "version": "3.0.0-0",
+  "version": "3.0.0",
   "description": "A low-code REST API framework",
   "main": "index.js",
   "scripts": {
