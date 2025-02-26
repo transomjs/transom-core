@@ -38,9 +38,15 @@
     "sinon": "^17.0.1"
   },
   "dependencies": {
+    "@fastify/compress": "^8.0.1",
+    "@fastify/cors": "^10.1.0",
     "bunyan": "^1.8.15",
     "debug": "^4.3.4",
+    "fastify": "^5.1.0",
+    "fastify-plugin": "^5.0.1",
+    "fastify-qs": "^5.0.0",
     "pocket-registry": "^1.1.8",
+    "qs": "^6.14.0",
     "restify": "^11.1.0",
     "restify-cookies": "^0.2.6",
     "restify-cors-middleware2": "^2.2.1",

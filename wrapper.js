@@ -1,101 +1,106 @@
 'use strict';
 
 module.exports = {
-    wrapServer: function(_restify, _registry) {
+    wrapServer: function(_fastify) {
         const server = {
             get registry() {
                 // Post-initialize registry access.
-                return _registry;
+                return _fastify.registry;
             },
-            get restify(){
-                return _restify;
+            get fastify(){
+                return _fastify;
             },
-            get name(){
-                return _restify.name;
-            },
-            set name(value){
-                return _restify.name = value;
-            },
-            get url(){
-                return _restify.url;
-            },
-            set url(value){
-                return _restify.url = value;
-            },
-            get domain(){
-                return _restify.domain;
-            },
-            set domain(value){
-                return _restify.domain = value;
-            },
+            // get name(){
+            //     return _fastify.name;
+            // },
+            // set name(value){
+            //     return _fastify.name = value;
+            // },
+            // get url(){
+            //     return _fastify.url;
+            // },
+            // set url(value){
+            //     return _fastify.url = value;
+            // },
+            // get domain(){
+            //     return _fastify.domain;
+            // },
+            // set domain(value){
+            //     return _fastify.domain = value;
+            // },
             get log(){
-                return _restify.log;
+                return _fastify.log;
             },
             set log(value){
-                return _restify.log = value;
+                return _fastify.log = value;
             },
             get(...args) {
-                _restify.emit('transom.route.get', args);
-                return _restify.get(...args);
+                _fastify.emit('transom.route.get', args);
+                return _fastify.get(...args);
             },
             head(...args) {
-                _restify.emit('transom.route.head', args);
-                return _restify.head(...args);
+                _fastify.emit('transom.route.head', args);
+                return _fastify.head(...args);
+            },
+            trace(...args) {
+                _fastify.emit('transom.route.trace', args);
+                return _fastify.trace(...args);
             },
             post(...args) {
-                _restify.emit('transom.route.post', args);
-                return _restify.post(...args);
+                _fastify.emit('transom.route.post', args);
+                return _fastify.post(...args);
             },
             put(...args) {
-                _restify.emit('transom.route.put', args);
-                return _restify.put(...args);
+                _fastify.emit('transom.route.put', args);
+                return _fastify.put(...args);
             },
             patch(...args) {
-                _restify.emit('transom.route.patch', args);
-                return _restify.patch(...args);
+                _fastify.emit('transom.route.patch', args);
+                return _fastify.patch(...args);
             },
             del(...args) {
-                _restify.emit('transom.route.del', args);
-                return _restify.del(...args);
+                _fastify.emit('transom.route.del', args);
+                return _fastify.delete(...args);
             },
             opts(...args) {
-                _restify.emit('transom.route.opts', args);
-                return _restify.opts(...args);
+                _fastify.emit('transom.route.opts', args);
+                return _fastify.opts(...args);
             },
-            pre(...args) {
-                return _restify.pre(...args);
-            },
+            // pre(...args) {
+            //     return _fastify.pre(...args);
+            // },
             use(...args) {
-                return _restify.use(...args);
+                _fastify.emit('transom.route.all', args);
+                return _fastify.all(...args);
             },
-            listen(...args) {
-                return _restify.listen(...args);
-            },
-            close(...args) {
-                return _restify.close(...args);
-            },
-            on(...args) {
-                return _restify.on(...args);
-            },
-            param(...args) {
-                return _restify.param(...args);
-            }, 
-            rm(...args) {
-                _restify.emit('transom.route.rm', args);
-                return _restify.rm(...args);
-            }, 
-            address() {
-                return _restify.address();
-            }, 
-            inflightRequests() {
-                return _restify.inflightRequests();
-            }, 
-            getDebugInfo() {
-                return _restify.getDebugInfo();
-            }, 
-            toString() {
-                return _restify.toString();
-            }
+            // toString(...args) {
+            //     return _fastify.listen(...args);
+            // },
+            // close(...args) {
+            //     return _fastify.close(...args);
+            // },
+            // on(...args) {
+            //     return _fastify.on(...args);
+            // },
+            // param(...args) {
+            //     return _fastify.param(...args);
+            // }, 
+            // rm(...args) {
+            //     _fastify.emit('transom.route.rm', args);
+            //     return _fastify.rm(...args);
+            // }, 
+            // address() {
+            //     return _fastify.address();
+            // }, 
+            // inflightRequests() {
+            //     return _fastify.inflightRequests();
+            // }, 
+            // getDebugInfo() {
+            //     return _fastify.getDebugInfo();
+            // }, 
+            // toString() {
+            //     return _fastify.toString();
+            // }
         };
         return server;
     }

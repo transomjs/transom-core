@@ -1,28 +1,35 @@
 "use strict";
 
-const bunyan = require("bunyan");
-const corsMiddleware = require("restify-cors-middleware2");
+// const bunyan = require("bunyan");
+// const corsMiddleware = require("restify-cors-middleware2");
 const debug = require("debug")("transom:core");
 const favicon = require("serve-favicon");
 const path = require("path");
-const restify = require("restify");
-const restifyPlugins = require("restify").plugins;
-const CookieParser = require("restify-cookies");
+const fastify = require("fastify");
+const compress = require('@fastify/compress');
+const cookie = require('@fastify/cookie');
+const formbody = require('@fastify/formbody');
+const multipart = require('@fastify/multipart');
+const queryParser = require('query-parser');
+const cors = require('@fastify/cors');
+// const restify = require("restify");
+// const restifyPlugins = require("restify").plugins;
+// const CookieParser = require("restify-cookies");
 const semver = require("semver");
 const PocketRegistry = require("pocket-registry");
 const wrapper = require("./wrapper");
 
-function createLogger(options) {
-  let bunyanLogger;
-  if (options.transom && options.transom.requestLogger) {
-    const requestLoggerOpts = options.transom.requestLogger || {};
-    requestLoggerOpts.name = requestLoggerOpts.name || "TransomJS";
-    // Use the provided logger, or create a default one.
-    bunyanLogger =
-      requestLoggerOpts.log || bunyan.createLogger(requestLoggerOpts);
-  }
-  return bunyanLogger;
-}
+// function createLogger(options) {
+//   let bunyanLogger;
+//   if (options.transom && options.transom.requestLogger) {
+//     const requestLoggerOpts = options.transom.requestLogger || {};
+//     requestLoggerOpts.name = requestLoggerOpts.name || "TransomJS";
+//     // Use the provided logger, or create a default one.
+//     bunyanLogger =
+//       requestLoggerOpts.log || bunyan.createLogger(requestLoggerOpts);
+//   }
+//   return bunyanLogger;
+// }
 
 // Process an array of Promises serially, discard the results.
 function serial(promiseArray) {
@@ -58,10 +65,10 @@ TransomCore.prototype.configure = function (plugin, options) {
   });
 };
 
-TransomCore.prototype.initialize = function (restifyServer, options) {
-  return new Promise((resolve, reject) => {
+TransomCore.prototype.initialize = function (fastifyServer, options) {
+  return new Promise(async (resolve, reject) => {
     // Fail nicely on old versions of Node.
-    const minNodeVersion = "12.0.0";
+    const minNodeVersion = "18.0.0";
     if (semver.lte(process.version, minNodeVersion)) {
       throw new Error(
         `TransomJS doesn't support NodeJS versions older than ${minNodeVersion}, currently running ${process.version}.`
@@ -69,26 +76,25 @@ TransomCore.prototype.initialize = function (restifyServer, options) {
     }
 
     // Allow users to create their own Server & pass it in along with an options object.
-    if (!options) {
-      debug("Creating new Restify server");
-      options = restifyServer || {};
-
-      restifyServer = restify.createServer({
-        log: createLogger(options),
-      });
-    } else {
-      debug("Using the provided Restify server");
-      const tmpLogger = createLogger(options);
-      if (tmpLogger) {
-        restifyServer.log = tmpLogger;
-      }
-    }
+    // if (!options) {
+    //   debug("Creating new Fastify server");
+    //   options = fastifyServer || {};
+    // 
+    //   fastifyServer = fastify.createServer({
+    //     log: createLogger(options),
+    //   });
+    // } else {
+    //   debug("Using the provided Fastify server");
+    //   const tmpLogger = createLogger(options);
+    //   if (tmpLogger) {
+    //     fastifyServer.log = tmpLogger;
+    //   }
+    // }
 
     options.transom = options.transom || {};
 
     // Warn the developer if running with a non-zero timezone offset.
-    const suppressTimezoneWarning =
-      options.transom.suppressTimezoneWarning || false;
+    const suppressTimezoneWarning = options.transom.suppressTimezoneWarning || false;
     const offset = new Date().getTimezoneOffset();
     if (!suppressTimezoneWarning && offset !== 0) {
       const parts = process.argv[1].split(path.sep);
@@ -106,18 +112,24 @@ process.env.TZ = 'Etc/GMT';\n`;
       console.log(yellow, line + warningMsg + line, reset);
     }
 
-    // Create a wrapper around Restify, exposing the most common methods
-    // and provide a 'restify' property for the ones we haven't exposed.
-    const server = wrapper.wrapServer(restifyServer, _registry);
+    fastify.decorate('registry', {
+      getter() {
+        return _registry;
+      }
+    });
+
+    // Create a wrapper around Fastify, exposing the most common methods
+    // and provide a 'fastify' property for the ones we haven't exposed.
+    const server = wrapper.wrapServer(fastifyServer);
 
     // Apply the requestLogger, unless set to false!
-    if (options.transom && options.transom.requestLogger !== false) {
-      server.use(
-        restify.plugins.requestLogger({
-          log: server.log,
-        })
-      );
-    }
+    // if (options.transom && options.transom.requestLogger !== false) {
+    //   server.use(
+    //     restify.plugins.requestLogger({
+    //       log: server.log,
+    //     })
+    //   );
+    // }
 
     // Put the transom configuration and API definition into a global registry.
     server.registry.set("transom-config", options);
@@ -143,15 +155,8 @@ process.env.TZ = 'Etc/GMT';\n`;
     const corsOptions = server.registry.get("transom-config.transom.cors", {});
     if (corsOptions) {
       debug("Adding CORS handling");
-      // Get an array of valid domain names for CORS and handle OPTIONS requests.
-      corsOptions.origins = corsOptions.origins || ["*"];
-      corsOptions.allowHeaders = (corsOptions.allowHeaders || []).concat([
-        "authorization",
-      ]);
-
-      const cors = corsMiddleware(corsOptions);
-      server.pre(cors.preflight);
-      server.use(cors.actual);
+      // https://www.npmjs.com/package/@fastify/cors
+      await fastify.register(cors, corsOptions)
     }
 
     // Parse body parameters into the req.params object.
@@ -160,11 +165,19 @@ process.env.TZ = 'Etc/GMT';\n`;
       {}
     );
     if (bodyOpts) {
-      debug("Adding Restify BodyParser plugin");
-      bodyOpts.mapParams =
-        bodyOpts.mapParams === undefined ? true : bodyOpts.mapParams; // default true
-      bodyOpts.limit = bodyOpts.limit === undefined ? 20000 : bodyOpts.limit; // default 20000
-      server.use(restifyPlugins.bodyParser(bodyOpts));
+      // Add a parser for the content type application/x-www-form-urlencoded.
+      debug("Adding Fastify formbody (BodyParser) plugin");
+      bodyOpts.bodyLimit = bodyOpts.limit || 20000;
+
+      await fastify.register(formbody, bodyOpts);
+    }
+    const multipartOpts = server.registry.get(
+      "transom-config.transom.multipart",
+      {}
+    );
+    if (multipartOpts) {
+      debug("Adding Fastify Multipart plugin");
+      await fastify.register(multipart, multipartOpts);
     }
 
     // Parse query parameters into the req.params object.
@@ -173,23 +186,21 @@ process.env.TZ = 'Etc/GMT';\n`;
       {}
     );
     if (queryOpts) {
-      debug("Adding Restify QueryParser plugin");
-      queryOpts.mapParams =
-        queryOpts.mapParams === undefined ? true : queryOpts.mapParams; // default true
-      server.use(restifyPlugins.queryParser(queryOpts));
+      debug("Adding Fastify fastify-qs (QueryParser) plugin");
+      fastify.register(queryParser, queryOpts)
     }
 
     // Parse url-encoded forms into the req.params object.
-    const encBodyOpts = server.registry.get(
-      "transom-config.transom.urlEncodedBodyParser",
-      {}
-    );
-    if (encBodyOpts) {
-      debug("Adding Restify UrlEncodedBodyParser plugin");
-      encBodyOpts.mapParams =
-        encBodyOpts.mapParams === undefined ? true : encBodyOpts.mapParams; // default true
-      server.use(restifyPlugins.urlEncodedBodyParser(encBodyOpts));
-    }
+    // const encBodyOpts = server.registry.get(
+    //   "transom-config.transom.urlEncodedBodyParser",
+    //   {}
+    // );
+    // if (encBodyOpts) {
+    //   debug("Adding Restify UrlEncodedBodyParser plugin");
+    //   encBodyOpts.mapParams =
+    //     encBodyOpts.mapParams === undefined ? true : encBodyOpts.mapParams; // default true
+    //   server.use(restifyPlugins.urlEncodedBodyParser(encBodyOpts));
+    // }
 
     // Parse cookies into the req.cookies object.
     const cookieParserOpts = server.registry.get(
@@ -197,29 +208,37 @@ process.env.TZ = 'Etc/GMT';\n`;
       {}
     );
     if (cookieParserOpts) {
-      debug("Adding Restify CookieParser plugin");
-      server.use(CookieParser.parse);
+      debug("Adding Fastify CookieParser plugin");
+      // {
+      //   secret: "my-secret", // for cookies signature
+      //   hook: 'onRequest', // set to false to disable cookie autoparsing or 
+      //                     // set autoparsing on any of the following hooks: 
+      //                     // 'onRequest', 'preParsing', 'preHandler', 'preValidation'. 
+      //                     // default: 'onRequest'
+      //   parseOptions: {}  // options for parsing cookies
+      // }
+      fastify.register(cookie, cookieParserOpts);
     }
 
     // Compress API responses with gzip.
     const gzipOpts = server.registry.get(
-      "transom-config.transom.gzipResponse",
-      {}
+      "transom-config.transom.compress",
+      { global: true }
     );
     if (gzipOpts) {
-      debug("Adding Restify GzipResponse plugin");
-      server.use(restifyPlugins.gzipResponse(gzipOpts));
+      debug("Adding Fastify Compress plugin");
+      await fastify.register(compress, gzipOpts);
     }
 
     // Use fullResponse, adding a bunch of Headers to the response.
-    const fullOpts = server.registry.get(
-      "transom-config.transom.fullResponse",
-      {}
-    );
-    if (fullOpts) {
-      debug("Adding Restify FullResponse plugin");
-      server.use(restifyPlugins.fullResponse(fullOpts));
-    }
+    // const fullOpts = server.registry.get(
+    //   "transom-config.transom.fullResponse",
+    //   {}
+    // );
+    // if (fullOpts) {
+    //   debug("Adding Restify FullResponse plugin");
+    //   server.use(restifyPlugins.fullResponse(fullOpts));
+    // }
 
     // Provide a transom icon for API GET requests from a browser.
     const faviconOpts = server.registry.get(
@@ -228,17 +247,39 @@ process.env.TZ = 'Etc/GMT';\n`;
     );
     if (faviconOpts) {
       debug("Adding Favicon support");
-      faviconOpts.path =
-        faviconOpts.path || path.join(__dirname, "images", "favicon.ico");
-      server.use(favicon(faviconOpts.path));
+      faviconOpts.path = faviconOpts.path || path.join(__dirname, "images");
+      faviconOpts.name = faviconOpts.name || "favicon.ico";
+      faviconOpts.maxAge = faviconOpts.maxAge || 3600;
+
+      fastify.register(require('fastify-favicon'), faviconOpts);
     }
 
     // Create req.locals *before* initializing all our plugins!
-    server.use((req, res, next) => {
-      debug("Initializing req.locals and req.session");
-      req.locals = req.locals || {}; // Required by many of our API methods.
-      req.session = req.session || {}; // required by FacebookStrategy.
-      next();
+    // Required by many of our API methods.
+    debug("Initializing req.locals and req.session");
+    fastify.decorateRequest('locals', {
+      getter() {
+        if (!this._locals) {
+          this._locals = {};
+        }
+        return this._locals;
+      },
+      setter(value) {
+        this._locals = value;
+      }
+    });
+  
+    // Required by FacebookStrategy.
+    fastify.decorateRequest('session', {
+      getter() {
+        if (!this._session) {
+          this._session = {};
+        }
+        return this._session;
+      },
+      setter(value) {
+        this._session = value;
+      }
     });
 
     // Configure each registered plugin, in the order they've been added.
