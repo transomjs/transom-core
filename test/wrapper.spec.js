@@ -23,7 +23,15 @@ describe('TransomCore wrapper', function() {
         'use',
         'listen',
         'close',
-        'on'
+        'on',
+        'param',
+        'rm'
+    ];
+    const noArgFxs = [
+        'address',
+        'inflightRequests',
+        'getDebugInfo',
+        'toString'
     ];
     let restify;
     let expect;
@@ -63,6 +71,15 @@ describe('TransomCore wrapper', function() {
             });
         });
 
+        // Define no-arg functions
+        noArgFxs.map(p => {
+            Object.defineProperty(MockRestify.prototype, p, {
+                value: function() {
+                    return `Function name is ${p}.`
+                }
+            });
+        });
+
         restify = new MockRestify();
 
         // Create and hang onto the spies!
@@ -73,6 +90,9 @@ describe('TransomCore wrapper', function() {
 
         spies['emit'] = sinon.spy(restify, 'emit');
         fxs.map(f => {
+            spies[f] = sinon.spy(restify, f);
+        });
+        noArgFxs.map(f => {
             spies[f] = sinon.spy(restify, f);
         });
     });
@@ -175,5 +195,32 @@ describe('TransomCore wrapper', function() {
             expect(spies['emit'].lastCall.args[1][0]).to.equal(`Calling HTTP ${h} method!`);
         });
         expect(spies['emit'].callCount).to.equal(httpMethods.length);
-    });    
+    });
+
+    it('calls on wrapped no-arg functions pass through to Restify', function() {
+        const registry = {};
+
+        // Wrapper the registry & Restify.
+        const wrapper = new Wrapper.wrapServer(restify, registry);
+
+        // Test the no-arg functions
+        noArgFxs.map(f => {
+            const result = wrapper[f](); // call fx with no args!
+            expect(result).to.equal(`Function name is ${f}.`);
+            expect(spies[f].callCount).to.equal(1);
+        });
+    });
+
+    it('rm method emits transom.route.rm event', function() {
+        const registry = {};
+
+        // Wrapper the registry & Restify.
+        const wrapper = new Wrapper.wrapServer(restify, registry);
+
+        // Test rm emits event like http methods
+        const result = wrapper.rm('/test/route');
+        expect(result).to.equal('Function name is rm.');
+        expect(spies['emit'].lastCall.args[0]).to.equal('transom.route.rm');
+        expect(spies['emit'].lastCall.args[1][0]).to.equal('/test/route');
+    });
 });

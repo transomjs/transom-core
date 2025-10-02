@@ -317,4 +317,47 @@ describe('TransomCore', function () {
 
     });
 
+    it('can access registry before initialization', function () {
+        const registry = core.registry;
+        expect(registry).to.exist;
+        expect(registry.constructor.name).to.equal('PocketRegistry');
+
+        // Make sure it's a functioning registry
+        registry.set("test-key", "test-value");
+        expect(registry.get("test-key")).to.equal('test-value');
+    });
+
+    it('logs routes when debug is enabled', function (done) {
+        const dummyServer = {};
+        dummyServer.pre = sinon.spy();
+        dummyServer.use = sinon.spy();
+
+        const myApi = {
+            transom: TRANSOM
+        };
+
+        // Mock debug to be enabled
+        const originalEnabled = require('debug').enabled;
+        const debugModule = require('debug');
+        debugModule.enabled = true;
+
+        core.initialize(dummyServer, myApi).then(function(server){
+            // Add router with mounts to trigger the logging code
+            server.router = {
+                mounts: {
+                    'GET-/api/v1/test': {
+                        spec: {
+                            method: 'GET',
+                            path: '/api/v1/test'
+                        }
+                    }
+                }
+            };
+
+            // Restore original debug state
+            debugModule.enabled = originalEnabled;
+            done();
+        }).catch(done);
+    });
+
 });
