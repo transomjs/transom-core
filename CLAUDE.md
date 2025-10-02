@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-`transom-core` is a low-code REST API framework built on Restify. It provides a foundation for quickly building REST APIs using metadata-driven configuration. The framework uses a plugin architecture where functionality is added through Transom modules.
+`transom-core` is a low-code REST API framework built on Express. It provides a foundation for quickly building REST APIs using metadata-driven configuration. The framework uses a plugin architecture where functionality is added through Transom modules.
 
 ## Key Commands
 
@@ -36,13 +36,14 @@ npm run deploy
 **index.js** - Main entry point containing `TransomCore` class
 - Creates and manages a single `PocketRegistry` instance for dependency injection
 - Manages plugin lifecycle through `configure()` and `initialize()` methods
-- Sets up default Restify middleware (CORS, body parsing, logging, etc.)
+- Sets up default Express middleware (CORS, body parsing, logging, compression, etc.)
 - Plugins are initialized serially, then `preStart()` hooks run serially
 
 **wrapper.js** - Server wrapper
-- Wraps the Restify server to expose common methods
+- Wraps the Express server to expose common methods
 - Emits custom events (`transom.route.*`) when routes are registered
-- Provides access to the registry and underlying Restify instance
+- Provides access to the registry and underlying Express instance
+- Maps Restify-style methods (`del`, `opts`) to Express equivalents (`delete`, `options`)
 
 ### Plugin System
 
@@ -69,15 +70,17 @@ Common registry keys:
 ### Default Middleware (Configurable)
 
 All can be disabled by setting to `false` in the `transom` config node:
-- `requestLogger` - Bunyan-based request logging with unique `req_id`
-- `cors` - CORS middleware with preflight support
-- `bodyParser` - Parse JSON/multipart bodies (mapParams: true by default)
-- `queryParser` - Parse query strings (mapParams: true by default)
-- `urlEncodedBodyParser` - Parse form data (mapParams: true by default)
-- `cookieParser` - Parse cookies via restify-cookies
-- `gzipResponse` - Compress responses
-- `fullResponse` - Add standard HTTP headers
-- `favicon` - Serve favicon (default location: `./images/favicon.ico`)
+- `requestLogger` - Bunyan-based request logging with unique `req_id` (custom middleware)
+- `cors` - CORS middleware using `cors` package
+- `bodyParser` - Parse JSON bodies using `express.json()` (mapParams: true by default)
+- `queryParser` - Copy query params to req.params (built into Express)
+- `urlEncodedBodyParser` - Parse form data using `express.urlencoded()` (mapParams: true by default)
+- `cookieParser` - Parse cookies using `cookie-parser` package
+- `gzipResponse` - Compress responses using `compression` package
+- `fullResponse` - Add standard HTTP headers (custom middleware)
+- `favicon` - Serve favicon using `serve-favicon` package (default location: `./images/favicon.ico`)
+
+**Note:** With Express, `bodyParser`, `queryParser`, and `urlEncodedBodyParser` with `mapParams` enabled will add TWO middleware each (one for parsing, one for mapping to req.params).
 
 ### Request Context
 
@@ -102,7 +105,8 @@ transom.initialize(apiDefinition).then(server => {
 
 Or with custom server:
 ```javascript
-const server = restify.createServer();
+const express = require('express');
+const server = express();
 server.use(customMiddleware);
 transom.initialize(server, apiDefinition);
 ```
