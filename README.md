@@ -6,13 +6,13 @@ Transom-core is a foundation for low-code REST API and realtime server developme
 [![Coverage Status](https://coveralls.io/repos/github/transomjs/transom-core/badge.svg?branch=master)](https://coveralls.io/github/transomjs/transom-core?branch=master)
 
 ## Based on many projects you already know!
-Transom uses Restify as it's core. We use Passport for authentication, Mongoose for data, SocketIO for realtime updates, Nodemailer for sending emails created with EJS templates!
+Transom uses Express as it's core. We use Passport for authentication, Mongoose for data, SocketIO for realtime updates, Nodemailer for sending emails created with EJS templates!
 
 #### Need something else?
 Did we miss your favorite project or something you need for your product? Create a Transom module and let us know about it!
 
 ## Extensible
-A transom server without modules, is just an empty Restify server. Adding functionality goes quickly with well thought out modules to provide common REST API functions. Features not available in an existing module can be added directly to the (Restify) server as custom routes or rolled into a custom module that can be loaded along-side with other Transom modules.
+A transom server without modules, is just an empty Express server. Adding functionality goes quickly with well thought out modules to provide common REST API functions. Features not available in an existing module can be added directly to the (Express) server as custom routes or rolled into a custom module that can be loaded along-side with other Transom modules.
 
 ## Installation
 ```bash
@@ -29,7 +29,7 @@ The following simple example is the `index.js` file from a REST API built with T
 * Import the Transom-core and create a new instance.
 * Import and configure any Transom modules.
 * Import your API definition; This is the metadata that defines your API.
-* Call transom.initialize() with your metadata object. It will return a Promise that resolves to your Restify server.
+* Call transom.initialize() with your metadata object. It will return a Promise that resolves to your Express server.
 * Call server.listen()
 
 ```javascript
@@ -48,7 +48,7 @@ transom.configure(transomMongoose, {
   mongodb_uri: 'mongodb://localhost/transom-dev'
 });
 
-// Initialize all modules at once, returning a Restify server instance.
+// Initialize all modules at once, returning an Express server instance.
 transom.initialize(myApi).then(function(server){
 
 	// Add any additional routes as necessary.
@@ -60,8 +60,8 @@ transom.initialize(myApi).then(function(server){
 	// Add your own Error handlers
 
 	// Start the server!
-	server.listen(7000, function () {
-		console.log('%s listening at %s', server.name, server.url);
+	const httpServer = server.listen(7000, function () {
+		console.log('Server listening at http://localhost:7000');
 	});
 });
 ```
@@ -77,11 +77,12 @@ We've created a few small apis to demonstrate the usage of individual plugins:
 * https://github.com/binaryops-wiebo/transom-socketio-internal-example
 
 ## Want to add something before the Transom plugins?
-That's easy too. Simply create your own server instance and pass it to Transom after it's been initilized.
+That's easy too. Simply create your own server instance and pass it to Transom after it's been initialized.
 ```javascript
-// Create your own Restify server instance and initialize it as needed.
-const server = restify.createServer();
-server.use(myCustomPlugin);
+// Create your own Express server instance and initialize it as needed.
+const express = require('express');
+const server = express();
+server.use(myCustomMiddleware);
 // Later, initialize the registered Transom modules.
 transom.initialize(server, myApi);
 ```
@@ -120,7 +121,7 @@ const myApi = {
 ```
 
 ### TransomCore plugins
-The following plugins come standard in a Transom based server because we've found them to be both necessary and useful. Options provided in the definition are passed directly to each plugin unless otherwise documented below. See the documentation on each respective plugin as it's going to be more current than if we copied it here.
+The following plugins come standard in a Transom based server because we've found them to be both necessary and useful. Options provided in the definition are passed directly to each plugin unless otherwise documented below. Transom Core now uses Express middleware for all plugins.
 
 If you would prefer not to use any of the individual plugins applied in core, set the corresponding option to false. The following config disables the default `favicon` plugin.
 ```javascript
@@ -132,16 +133,15 @@ const myApi = {
 ```
 
 #### requestLogger
-http://restify.com/docs/plugins-api/#requestlogger
 The `requestLogger` option can be used a number of ways depending on your need to customize logging within your API.
 
-* Disable request logging by setting `requestLogger` to false. TransomJS will defer to Restify's default logger but log output will not include a unique `req_id` on each individual request.
+* Disable request logging by setting `requestLogger` to false. TransomJS will not add request logging middleware.
 ```javascript
 transom: {
 	requestLogger: false
 }
 ```
-* Create your own Bunyan logger object and pass it in as `log`. Restify will use your logger and include a unique `req_id` on each individual request.
+* Create your own Bunyan logger object and pass it in as `log`. Transom will use your logger and include a unique `req_id` on each individual request.
 ```javascript
 transom: {
 	requestLogger: {
@@ -149,7 +149,7 @@ transom: {
 	}
 }
 ```
-* Define a custom [Bunyan logger](https://www.npmjs.com/package/bunyan), Restify will create a new Bunyan logger using your configuration.
+* Define a custom [Bunyan logger](https://www.npmjs.com/package/bunyan), Transom will create a new Bunyan logger using your configuration.
 ```javascript
 transom: {
 	requestLogger: {
@@ -165,28 +165,30 @@ transom: {
 ```
 
 #### cors
-https://www.npmjs.com/package/restify-cors-middleware2
+https://www.npmjs.com/package/cors
 The `authorization` header is added to the `allowHeaders` option automatically as it's required for Bearer authentication.
-The `origins` option is set to a wildcard for easier development and can be set with an environment variable when moving to test or production. Both preflight & actual middleware are applied. Keep in mind that `http://localhost:8100` is different than `http://127.0.0.1:8100` which is again different than `http://[::]:8100` even though they *may* all resolve to the same service. CORs middleware can accept an array of String, or regEx to match acceptable URI patters. See the official documentation for additional details.
+The `origins` option is set to a wildcard for easier development and can be set with an environment variable when moving to test or production. Keep in mind that `http://localhost:8100` is different than `http://127.0.0.1:8100` which is again different than `http://[::]:8100` even though they *may* all resolve to the same service. CORS middleware can accept an array of strings or RegEx patterns to match acceptable URI patterns. See the official documentation for additional details.
 
 #### bodyParser
-http://restify.com/docs/plugins-api/#bodyparser
+Uses Express built-in `express.json()` middleware.
 The `mapParams` option is set to true by default. Many Transom modules will only look for submitted values in req.params, rather than having to check in each of req.query or req.body.
 
 #### urlEncodedBodyParser
-A child plugin of the bodyParser. The `mapParams` option is set to true by default.
+Uses Express built-in `express.urlencoded()` middleware. The `mapParams` option is set to true by default.
 
 #### queryParser
-http://restify.com/docs/plugins-api/#queryparser The `mapParams` option is set to true by default.
+Query parsing is built into Express. The `mapParams` option is set to true by default, which copies query parameters to req.params.
 
 #### cookieParser
-https://www.npmjs.com/package/restify-cookies Looking for cookies named `access_token` by default.
+https://www.npmjs.com/package/cookie-parser
+Standard Express cookie parser middleware.
 
 #### gzipResponse
-http://restify.com/docs/plugins-api/#gzipresponse
+https://www.npmjs.com/package/compression
+Uses the `compression` middleware to compress API responses with gzip.
 
 #### fullResponse
-http://restify.com/docs/plugins-api/#fullresponse
+Custom middleware that adds standard HTTP response headers including `X-Powered-By` and `X-Request-Id`.
 
 #### favicon
 https://www.npmjs.com/package/serve-favicon

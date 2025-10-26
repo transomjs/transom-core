@@ -1,13 +1,13 @@
 "use strict";
 
 const bunyan = require("bunyan");
-const corsMiddleware = require("restify-cors-middleware2");
+const compression = require("compression");
+const cookieParser = require("cookie-parser");
+const cors = require("cors");
 const debug = require("debug")("transom:core");
+const express = require("express");
 const favicon = require("serve-favicon");
 const path = require("path");
-const restify = require("restify");
-const restifyPlugins = require("restify").plugins;
-const CookieParser = require("restify-cookies");
 const semver = require("semver");
 const PocketRegistry = require("pocket-registry");
 const wrapper = require("./wrapper");
@@ -24,11 +24,40 @@ function createLogger(options) {
   return bunyanLogger;
 }
 
+// Bunyan request logger middleware for Express
+function requestLoggerMiddleware(log) {
+  return function (req, res, next) {
+    const reqId = require("crypto").randomUUID();
+    req.id = reqId;
+    req.log = log.child({ req_id: reqId });
+
+    req.log.info({
+      method: req.method,
+      url: req.url,
+      headers: req.headers
+    }, "request started");
+
+    next();
+  };
+}
+
 // Process an array of Promises serially, discard the results.
 function serial(promiseArray) {
   return promiseArray.reduce((acc, current) => {
     return acc.then(current);
   }, Promise.resolve());
+}
+
+// Route metadata utility function
+function withMeta(metadata, handler) {
+  return (req, res, next) => {
+    res.locals.routeMeta = metadata;
+    if (handler.length === 4) { // Error handler
+      handler(null, req, res, next);
+    } else {
+      handler(req, res, next);
+    }
+  };
 }
 
 // Create a single registry and plugins array for TransomCore.
@@ -58,10 +87,10 @@ TransomCore.prototype.configure = function (plugin, options) {
   });
 };
 
-TransomCore.prototype.initialize = function (restifyServer, options) {
+TransomCore.prototype.initialize = function (expressServer, options) {
   return new Promise((resolve, reject) => {
     // Fail nicely on old versions of Node.
-    const minNodeVersion = "12.0.0";
+    const minNodeVersion = "18.0.0";
     if (semver.lte(process.version, minNodeVersion)) {
       throw new Error(
         `TransomJS doesn't support NodeJS versions older than ${minNodeVersion}, currently running ${process.version}.`
@@ -70,17 +99,19 @@ TransomCore.prototype.initialize = function (restifyServer, options) {
 
     // Allow users to create their own Server & pass it in along with an options object.
     if (!options) {
-      debug("Creating new Restify server");
-      options = restifyServer || {};
+      debug("Creating new Express server");
+      options = expressServer || {};
 
-      restifyServer = restify.createServer({
-        log: createLogger(options),
-      });
+      expressServer = express();
+      const logger = createLogger(options);
+      if (logger) {
+        expressServer.log = logger;
+      }
     } else {
-      debug("Using the provided Restify server");
+      debug("Using the provided Express server");
       const tmpLogger = createLogger(options);
       if (tmpLogger) {
-        restifyServer.log = tmpLogger;
+        expressServer.log = tmpLogger;
       }
     }
 
@@ -106,17 +137,15 @@ process.env.TZ = 'Etc/GMT';\n`;
       console.log(yellow, line + warningMsg + line, reset);
     }
 
-    // Create a wrapper around Restify, exposing the most common methods
-    // and provide a 'restify' property for the ones we haven't exposed.
-    const server = wrapper.wrapServer(restifyServer, _registry);
+    // Create a wrapper around Express, exposing the most common methods
+    // and provide a 'express' property for the ones we haven't exposed.
+    const server = wrapper.wrapServer(expressServer, _registry);
 
     // Apply the requestLogger, unless set to false!
     if (options.transom && options.transom.requestLogger !== false) {
-      server.use(
-        restify.plugins.requestLogger({
-          log: server.log,
-        })
-      );
+      if (server.log) {
+        server.use(requestLoggerMiddleware(server.log));
+      }
     }
 
     // Put the transom configuration and API definition into a global registry.
@@ -143,52 +172,111 @@ process.env.TZ = 'Etc/GMT';\n`;
     const corsOptions = server.registry.get("transom-config.transom.cors", {});
     if (corsOptions) {
       debug("Adding CORS handling");
-      // Get an array of valid domain names for CORS and handle OPTIONS requests.
-      corsOptions.origins = corsOptions.origins || ["*"];
-      corsOptions.allowHeaders = (corsOptions.allowHeaders || []).concat([
-        "authorization",
-      ]);
+      
+      // Default CORS configuration
+      const defaultCorsOptions = {
+        origin: "*",
+        allowedHeaders: ["authorization"],
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+        preflightContinue: false,
+        optionsSuccessStatus: 200
+      };
 
-      const cors = corsMiddleware(corsOptions);
-      server.pre(cors.preflight);
-      server.use(cors.actual);
+      // Handle origins specifically - user can provide 'origins' or 'origin'
+      let origin = defaultCorsOptions.origin;
+      if (corsOptions.origins) {
+        origin = corsOptions.origins.length === 1 && corsOptions.origins[0] === "*" 
+          ? "*" 
+          : corsOptions.origins;
+      } else if (corsOptions.origin !== undefined) {
+        origin = corsOptions.origin;
+      }
+
+      // Handle allowedHeaders - merge user headers with defaults
+      let allowedHeaders = [...defaultCorsOptions.allowedHeaders];
+      if (corsOptions.allowHeaders) {
+        // Combine user headers with defaults, removing duplicates
+        allowedHeaders = [...new Set([...allowedHeaders, ...corsOptions.allowHeaders])];
+      } else if (corsOptions.allowedHeaders) {
+        allowedHeaders = [...new Set([...allowedHeaders, ...corsOptions.allowedHeaders])];
+      }
+
+      // Merge user options with defaults, with user options taking precedence
+      const expressCorsOptions = {
+        ...defaultCorsOptions,
+        ...corsOptions,
+        origin,
+        allowedHeaders
+      };
+
+      server.use(cors(expressCorsOptions));
+      
+      // Add explicit OPTIONS handler for all routes to ensure CORS preflight works
+      // server.use((req, res, next) => {
+      //   if (req.method === 'OPTIONS') {
+      //     debug('Handling OPTIONS request for:', req.path);
+      //     res.status(200).send();
+      //   } else {
+      //     next();
+      //   }
+      // });
     }
 
-    // Parse body parameters into the req.params object.
+    // Parse body parameters into the req.body object.
     const bodyOpts = server.registry.get(
       "transom-config.transom.bodyParser",
       {}
     );
     if (bodyOpts) {
-      debug("Adding Restify BodyParser plugin");
-      bodyOpts.mapParams =
-        bodyOpts.mapParams === undefined ? true : bodyOpts.mapParams; // default true
-      bodyOpts.limit = bodyOpts.limit === undefined ? 20000 : bodyOpts.limit; // default 20000
-      server.use(restifyPlugins.bodyParser(bodyOpts));
+      debug("Adding Express JSON body parser");
+      const limit = bodyOpts.limit === undefined ? "20kb" : bodyOpts.limit;
+      server.use(express.json({ limit }));
+
+      // If mapParams is enabled, copy body to params
+      if (bodyOpts.mapParams !== false) {
+        server.use((req, res, next) => {
+          req.params = req.params || {};
+          Object.assign(req.params, req.body);
+          next();
+        });
+      }
     }
 
-    // Parse query parameters into the req.params object.
+    // Parse query parameters - built into Express, just need to map to params if requested
     const queryOpts = server.registry.get(
       "transom-config.transom.queryParser",
       {}
     );
     if (queryOpts) {
-      debug("Adding Restify QueryParser plugin");
-      queryOpts.mapParams =
-        queryOpts.mapParams === undefined ? true : queryOpts.mapParams; // default true
-      server.use(restifyPlugins.queryParser(queryOpts));
+      debug("Adding query parameter mapping");
+      if (queryOpts.mapParams !== false) {
+        server.use((req, res, next) => {
+          req.params = req.params || {};
+          Object.assign(req.params, req.query);
+          next();
+        });
+      }
     }
 
-    // Parse url-encoded forms into the req.params object.
+    // Parse url-encoded forms into the req.body object.
     const encBodyOpts = server.registry.get(
       "transom-config.transom.urlEncodedBodyParser",
       {}
     );
     if (encBodyOpts) {
-      debug("Adding Restify UrlEncodedBodyParser plugin");
-      encBodyOpts.mapParams =
-        encBodyOpts.mapParams === undefined ? true : encBodyOpts.mapParams; // default true
-      server.use(restifyPlugins.urlEncodedBodyParser(encBodyOpts));
+      debug("Adding Express URL-encoded body parser");
+      const limit = encBodyOpts.limit === undefined ? "20kb" : encBodyOpts.limit;
+      server.use(express.urlencoded({ extended: true, limit }));
+
+      // If mapParams is enabled, copy body to params
+      if (encBodyOpts.mapParams !== false) {
+        server.use((req, res, next) => {
+          req.params = req.params || {};
+          Object.assign(req.params, req.body);
+          next();
+        });
+      }
     }
 
     // Parse cookies into the req.cookies object.
@@ -197,8 +285,8 @@ process.env.TZ = 'Etc/GMT';\n`;
       {}
     );
     if (cookieParserOpts) {
-      debug("Adding Restify CookieParser plugin");
-      server.use(CookieParser.parse);
+      debug("Adding cookie parser");
+      server.use(cookieParser());
     }
 
     // Compress API responses with gzip.
@@ -207,8 +295,8 @@ process.env.TZ = 'Etc/GMT';\n`;
       {}
     );
     if (gzipOpts) {
-      debug("Adding Restify GzipResponse plugin");
-      server.use(restifyPlugins.gzipResponse(gzipOpts));
+      debug("Adding compression");
+      server.use(compression(gzipOpts));
     }
 
     // Use fullResponse, adding a bunch of Headers to the response.
@@ -217,8 +305,12 @@ process.env.TZ = 'Etc/GMT';\n`;
       {}
     );
     if (fullOpts) {
-      debug("Adding Restify FullResponse plugin");
-      server.use(restifyPlugins.fullResponse(fullOpts));
+      debug("Adding full response headers");
+      server.use((req, res, next) => {
+        res.setHeader("X-Powered-By", "Transom");
+        res.setHeader("X-Request-Id", req.id || "unknown");
+        next();
+      });
     }
 
     // Provide a transom icon for API GET requests from a browser.
@@ -267,11 +359,13 @@ process.env.TZ = 'Etc/GMT';\n`;
       })
       .then(() => {
         // Log all the routes to the debug output, if enabled.
-        if (debug.enabled && server.router && server.router.mounts) {
-          Object.keys(server.router.mounts).forEach((key) => {
-            const mount = server.router.mounts[key];
-            if (mount.spec) {
-              debug(`${mount.spec.method}\t${mount.spec.path}`);
+        if (debug.enabled && server.express && server.express._router) {
+          server.express._router.stack.forEach((middleware) => {
+            if (middleware.route) {
+              const methods = Object.keys(middleware.route.methods);
+              methods.forEach((method) => {
+                debug(`${method.toUpperCase()}\t${middleware.route.path}`);
+              });
             }
           });
         }
@@ -284,5 +378,8 @@ process.env.TZ = 'Etc/GMT';\n`;
       });
   });
 }; // end initialize
+
+// Static utility methods
+TransomCore.withMeta = withMeta;
 
 module.exports = TransomCore;
