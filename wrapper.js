@@ -70,6 +70,7 @@ module.exports = {
             },
             opts(...args) {
                 _express.emit('transom.route.opts', args);
+                this.log.warn("The 'opts' method is deprecated. Use 'options' instead!");
                 // Express uses options() instead of opts()
                 if (typeof _express.options === 'function') {
                     return _express.options(...args);
@@ -78,7 +79,13 @@ module.exports = {
                 }
                 return _express;
             },
+            options(...args) {
+                _express.emit('transom.route.options', args);
+                // Express uses options() instead of opts()
+                return _express.options(...args);
+            },
             pre(...args) {
+                this.log.warn("The 'pre' method is deprecated. Use 'use' instead!");
                 // Express doesn't have pre(), so we'll treat it like use()
                 return _express.use(...args);
             },
@@ -106,6 +113,7 @@ module.exports = {
                 _express.emit('transom.route.rm', args);
                 // Express doesn't have rm(), but we can keep the API for compatibility
                 // This would need custom implementation to remove routes
+                this.log.warn("The 'rm' method is not implemented in Express. No action taken.");
                 return server;
             },
             address() {
@@ -117,6 +125,7 @@ module.exports = {
             },
             inflightRequests() {
                 // Express doesn't track this, return 0 for compatibility
+                this.log.warn("The 'inflightRequests' method is not implemented in Express. Returning 0.");
                 return 0;
             },
             getDebugInfo() {

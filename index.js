@@ -48,6 +48,18 @@ function serial(promiseArray) {
   }, Promise.resolve());
 }
 
+// Route metadata utility function
+function withMeta(metadata, handler) {
+  return (req, res, next) => {
+    res.locals.routeMeta = metadata;
+    if (handler.length === 4) { // Error handler
+      handler(null, req, res, next);
+    } else {
+      handler(req, res, next);
+    }
+  };
+}
+
 // Create a single registry and plugins array for TransomCore.
 let _registry;
 let _plugins;
@@ -160,19 +172,55 @@ process.env.TZ = 'Etc/GMT';\n`;
     const corsOptions = server.registry.get("transom-config.transom.cors", {});
     if (corsOptions) {
       debug("Adding CORS handling");
-      // Get an array of valid domain names for CORS and handle OPTIONS requests.
-      const origins = corsOptions.origins || ["*"];
-      const allowHeaders = (corsOptions.allowHeaders || []).concat([
-        "authorization",
-      ]);
+      
+      // Default CORS configuration
+      const defaultCorsOptions = {
+        origin: "*",
+        allowedHeaders: ["authorization"],
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+        preflightContinue: false,
+        optionsSuccessStatus: 200
+      };
 
+      // Handle origins specifically - user can provide 'origins' or 'origin'
+      let origin = defaultCorsOptions.origin;
+      if (corsOptions.origins) {
+        origin = corsOptions.origins.length === 1 && corsOptions.origins[0] === "*" 
+          ? "*" 
+          : corsOptions.origins;
+      } else if (corsOptions.origin !== undefined) {
+        origin = corsOptions.origin;
+      }
+
+      // Handle allowedHeaders - merge user headers with defaults
+      let allowedHeaders = [...defaultCorsOptions.allowedHeaders];
+      if (corsOptions.allowHeaders) {
+        // Combine user headers with defaults, removing duplicates
+        allowedHeaders = [...new Set([...allowedHeaders, ...corsOptions.allowHeaders])];
+      } else if (corsOptions.allowedHeaders) {
+        allowedHeaders = [...new Set([...allowedHeaders, ...corsOptions.allowedHeaders])];
+      }
+
+      // Merge user options with defaults, with user options taking precedence
       const expressCorsOptions = {
-        origin: origins.length === 1 && origins[0] === "*" ? "*" : origins,
-        allowedHeaders: allowHeaders,
-        credentials: corsOptions.credentials !== false,
+        ...defaultCorsOptions,
+        ...corsOptions,
+        origin,
+        allowedHeaders
       };
 
       server.use(cors(expressCorsOptions));
+      
+      // Add explicit OPTIONS handler for all routes to ensure CORS preflight works
+      // server.use((req, res, next) => {
+      //   if (req.method === 'OPTIONS') {
+      //     debug('Handling OPTIONS request for:', req.path);
+      //     res.status(200).send();
+      //   } else {
+      //     next();
+      //   }
+      // });
     }
 
     // Parse body parameters into the req.body object.
@@ -330,5 +378,8 @@ process.env.TZ = 'Etc/GMT';\n`;
       });
   });
 }; // end initialize
+
+// Static utility methods
+TransomCore.withMeta = withMeta;
 
 module.exports = TransomCore;
