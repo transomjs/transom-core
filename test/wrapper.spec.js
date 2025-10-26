@@ -56,6 +56,24 @@ describe('TransomCore wrapper', function() {
             });
         });
 
+        // Add mock logger functionality to prevent log.warn() errors
+        Object.defineProperty(MockRestify.prototype, 'log', {
+            get: function() {
+                if (!this.__log) {
+                    this.__log = {
+                        warn: sinon.stub(),
+                        info: sinon.stub(),
+                        error: sinon.stub(),
+                        debug: sinon.stub()
+                    };
+                }
+                return this.__log;
+            },
+            set: function(val) {
+                this.__log = val;
+            }
+        });
+
         // We don't expose emit, but it gets used by the wrapper!
         Object.defineProperty(MockRestify.prototype, 'emit', {
             value: function() {}
