@@ -3,7 +3,7 @@ const sinon = require('sinon');
 const Wrapper = require('../wrapper');
 
 describe('TransomCore wrapper', function() {
-    const properties = ['name', 'url', 'domain', 'log'];
+    const properties = ['name', 'url', 'domain'];
     const httpMethods = ['get',
     'head',
     'post',
