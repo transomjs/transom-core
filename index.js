@@ -78,7 +78,7 @@ TransomCore.prototype.configure = function (plugin, options) {
 TransomCore.prototype.initialize = function (expressServer, options) {
   return new Promise((resolve, reject) => {
     // Fail nicely on old versions of Node.
-    const minNodeVersion = "20.0.0";
+    const minNodeVersion = "18.0.0";
     if (semver.lte(process.version, minNodeVersion)) {
       throw new Error(
         `TransomJS doesn't support NodeJS versions older than ${minNodeVersion}, currently running ${process.version}.`

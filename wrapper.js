@@ -7,6 +7,10 @@ module.exports = {
                 // Post-initialize registry access.
                 return _registry;
             },
+            get restify(){
+                console.warn("The 'restify' property is deprecated. Use 'express' instead!");
+                return _express;
+            },
             get express(){
                 return _express;
             },
