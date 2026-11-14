@@ -1,6 +1,6 @@
 # @transomjs/transom-core change log
 
-## 6.0.0
+## 7.0.0
 - Uses pocket-registry 3, which has no runtime dependencies, so lodash is no longer installed
   with transom-core.
 - **Requires Node.js 22 or newer** (`engines.node` is `>=22`). `initialize()` rejects older
