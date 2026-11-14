@@ -119,9 +119,8 @@ class TransomCore {
   static withMeta = withMeta;
 
   constructor() {
-    // Initialize on create.
-    // Boundary: the typed Registry describes pocket-registry's get/set by key.
-    _registry = new PocketRegistry() as unknown as TransomCore.Registry;
+    // Initialize on create. pocket-registry 3 types get/set by key from RegistryMap.
+    _registry = new PocketRegistry<TransomCore.RegistryMap>();
     _plugins = [];
   }
 
