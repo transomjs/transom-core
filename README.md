@@ -2,8 +2,7 @@
 # transom-core
 Transom-core is a foundation for low-code REST API and realtime server development. Transom applications use metadata to configure pre-built and tested modules that allow developers to quickly piece together services that 'just work'! 
 
-[![Build Status](https://travis-ci.org/transomjs/transom-core.svg?branch=master)](https://travis-ci.org/transomjs/transom-core)
-[![Coverage Status](https://coveralls.io/repos/github/transomjs/transom-core/badge.svg?branch=master)](https://coveralls.io/github/transomjs/transom-core?branch=master)
+[![CI](https://github.com/transomjs/transom-core/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/transomjs/transom-core/actions/workflows/ci.yml)
 
 ## Based on many projects you already know!
 Transom uses Express as it's core. We use Passport for authentication, Mongoose for data, SocketIO for realtime updates, Nodemailer for sending emails created with EJS templates!
@@ -24,6 +23,19 @@ $ npm install --save @transomjs/transom-core
 An API definition is quite simply a JavaScript Object. It can be a single file, but it doesn't need to be. Break it up into logical pieces as needed or as your project grows. 
  * Checkout the API definition file from our <a target="_blank" href="https://github.com/4umfreak/transom-mongoose-example/blob/master/myApi.js">transom-mongoose-example</a> app.
  
+#### TypeScript
+Type definitions are included. Plugins implement `TransomPlugin<Options>`, and you can type
+your own registry keys by extending `RegistryMap`:
+```typescript
+import TransomCore = require("@transomjs/transom-core");
+
+declare module "@transomjs/transom-core" {
+  interface RegistryMap {
+    myService: MyService;
+  }
+}
+```
+
 #### index.js
 The following simple example is the `index.js` file from a REST API built with Transom. 
 * Import the Transom-core and create a new instance.

@@ -8,6 +8,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Key Commands
 
+### Building
+The source is TypeScript in `src/`, compiled to `dist/` (CommonJS, with `.d.ts`).
+```bash
+npm run build      # tsc -p tsconfig.build.json
+npm run typecheck  # build, then type-check src/ and test/types/ (consumer usage)
+```
+`npm test` builds first; the mocha tests run against `dist/`. The root `wrapper.js`
+is a shim that keeps `require("@transomjs/transom-core/wrapper")` working.
+
 ### Testing
 ```bash
 # Run all tests with coverage (requires NODE_ENV=test and DEBUG enabled)
@@ -33,13 +42,13 @@ npm run deploy
 
 ### Core Components
 
-**index.js** - Main entry point containing `TransomCore` class
+**src/index.ts** - Main entry point containing `TransomCore` class
 - Creates and manages a single `PocketRegistry` instance for dependency injection
 - Manages plugin lifecycle through `configure()` and `initialize()` methods
 - Sets up default Express middleware (CORS, body parsing, logging, compression, etc.)
 - Plugins are initialized serially, then `preStart()` hooks run serially
 
-**wrapper.js** - Server wrapper
+**src/wrapper.ts** - Server wrapper
 - Wraps the Express server to expose common methods
 - Emits custom events (`transom.route.*`) when routes are registered
 - Provides access to the registry and underlying Express instance
@@ -80,7 +89,7 @@ All can be disabled by setting to `false` in the `transom` config node:
 - `fullResponse` - Add standard HTTP headers (custom middleware)
 - `favicon` - Serve favicon using `serve-favicon` package (default location: `./images/favicon.ico`)
 
-**Note:** With Express, `bodyParser`, `queryParser`, and `urlEncodedBodyParser` with `mapParams` enabled will add TWO middleware each (one for parsing, one for mapping to req.params).
+**Note:** `mapParams` isn't middleware. Express replaces `req.params` at every router layer, so the wrapper (`src/wrapper.ts`) adds a param mapper as the first handler of each route registered through `server.get/post/put/patch/del/head/options`. Route params win; `use()` middleware and routes added straight to `server.express` don't get mapped values.
 
 ### Request Context
 
@@ -113,7 +122,7 @@ transom.initialize(server, apiDefinition);
 
 ## Important Notes
 
-- Minimum Node version: 18 (enforced in package.json engines)
+- Minimum Node version: 22 (package.json engines, and initialize() rejects older versions)
 - URI prefix validation: Must start with `/`, cannot end with `/`
 - Timezone warning: Framework warns if process runs with non-zero timezone offset
 - Debug logging: Use `debug` package with namespace `transom:core`

@@ -123,10 +123,9 @@ describe('TransomCore', function () {
         })
 
         core.initialize(dummyServer, myApi).then(function(server){
-            // With Express, bodyParser, queryParser, and urlEncodedBodyParser each add TWO middleware
-            // (one for parsing, one for mapParams). So we have more middleware calls than plugins.
-            // Just verify that middleware was added
-            expect(dummyServer.use.callCount).to.be.greaterThan(Object.keys(myApi.transom).length);
+            // One middleware per option, except queryParser (Express parses queries itself),
+            // plus the one that creates req.locals. mapParams is applied per route instead.
+            expect(dummyServer.use.callCount).to.equal(9);
             // Default api URI prefix.
             const prefix = server.registry.get('transom-config.definition.uri.prefix', "dummy");
             expect(prefix).to.equal('/api/v1');
@@ -209,9 +208,9 @@ describe('TransomCore', function () {
         })
 
         core.initialize(dummyServer, myApi).then(function(server){
-            // With Express, bodyParser, queryParser, and urlEncodedBodyParser each add TWO middleware
-            // Just verify that middleware was added
-            expect(dummyServer.use.callCount).to.be.greaterThan(Object.keys(myApi.transom).length);
+            // One middleware per option, except queryParser (Express parses queries itself),
+            // plus the one that creates req.locals. mapParams is applied per route instead.
+            expect(dummyServer.use.callCount).to.equal(9);
             done();
         })
         .catch(function(err){
@@ -353,6 +352,28 @@ describe('TransomCore', function () {
             done();
         }).catch(done);
 
+    });
+
+    describe('the minimum Node.js version (22)', function () {
+        const originalVersion = process.version;
+        function runningOn(version) {
+            Object.defineProperty(process, 'version', { value: version, writable: true, configurable: true });
+        }
+        afterEach(function () {
+            runningOn(originalVersion);
+        });
+
+        it('rejects Node 20', async function () {
+            runningOn('v20.19.0');
+            const err = await new TransomCore().initialize({}, { transom: { suppressTimezoneWarning: true } }).then(() => null, (e) => e);
+            expect(err.message).to.equal("TransomJS doesn't support NodeJS versions older than 22.0.0, currently running v20.19.0.");
+        });
+
+        it('accepts exactly 22.0.0', async function () {
+            runningOn('v22.0.0');
+            const server = await new TransomCore().initialize({ transom: { suppressTimezoneWarning: true, requestLogger: false } });
+            expect(server.registry.get('transom-config.definition.uri.prefix')).to.equal('/api/v1');
+        });
     });
 
     it('fails initialization with old Node.js version', function (done) {
