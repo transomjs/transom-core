@@ -28,7 +28,7 @@ type CoreRequest = Request & {
 function createLogger(options: TransomCore.TransomApiDefinition): Logger | undefined {
   let bunyanLogger: Logger | undefined;
   if (options.transom && options.transom.requestLogger) {
-    const requestLoggerOpts = options.transom.requestLogger || {};
+    const requestLoggerOpts = options.transom.requestLogger;
     requestLoggerOpts.name = requestLoggerOpts.name || "TransomJS";
     // Use the provided logger, or create a default one.
     bunyanLogger =
@@ -289,7 +289,6 @@ process.env.TZ = 'Etc/GMT';\n`;
         // If mapParams is enabled, copy body to params
         if (bodyOpts.mapParams !== false) {
           server.use(handler((req, _res, next) => {
-            req.params = req.params || {};
             Object.assign(req.params, req.body);
             next();
           }));
@@ -302,7 +301,6 @@ process.env.TZ = 'Etc/GMT';\n`;
         debug("Adding query parameter mapping");
         if (queryOpts.mapParams !== false) {
           server.use(handler((req, _res, next) => {
-            req.params = req.params || {};
             Object.assign(req.params, req.query);
             next();
           }));
@@ -319,7 +317,6 @@ process.env.TZ = 'Etc/GMT';\n`;
         // If mapParams is enabled, copy body to params
         if (encBodyOpts.mapParams !== false) {
           server.use(handler((req, _res, next) => {
-            req.params = req.params || {};
             Object.assign(req.params, req.body);
             next();
           }));
