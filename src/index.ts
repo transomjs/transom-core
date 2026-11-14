@@ -14,6 +14,7 @@ import favicon from "serve-favicon";
 import semver from "semver";
 import PocketRegistry from "pocket-registry";
 import { wrapServer } from "./wrapper";
+import type { ParamSource } from "./wrapper";
 
 const debug = createDebug("transom:core");
 
@@ -210,7 +211,12 @@ process.env.TZ = 'Etc/GMT';\n`;
 
       // Create a wrapper around Express, exposing the most common methods
       // and provide a 'express' property for the ones we haven't exposed.
-      const server = wrapServer(expressServer, _registry);
+      // Filled in below from the parsers' mapParams options. The wrapper copies these
+      // values onto req.params as the first handler of each route registered through it.
+      const paramSources: ParamSource[] = [];
+      const fromBody: ParamSource = (req) => req.body;
+      const fromQuery: ParamSource = (req) => req.query;
+      const server = wrapServer(expressServer, _registry, paramSources);
 
       // Apply the requestLogger, unless set to false!
       if (options.transom && options.transom.requestLogger !== false) {
@@ -288,10 +294,7 @@ process.env.TZ = 'Etc/GMT';\n`;
 
         // If mapParams is enabled, copy body to params
         if (bodyOpts.mapParams !== false) {
-          server.use(handler((req, _res, next) => {
-            Object.assign(req.params, req.body);
-            next();
-          }));
+          paramSources.push(fromBody);
         }
       }
 
@@ -300,10 +303,7 @@ process.env.TZ = 'Etc/GMT';\n`;
       if (queryOpts) {
         debug("Adding query parameter mapping");
         if (queryOpts.mapParams !== false) {
-          server.use(handler((req, _res, next) => {
-            Object.assign(req.params, req.query);
-            next();
-          }));
+          paramSources.push(fromQuery);
         }
       }
 
@@ -315,11 +315,9 @@ process.env.TZ = 'Etc/GMT';\n`;
         server.use(express.urlencoded({ extended: true, limit }));
 
         // If mapParams is enabled, copy body to params
-        if (encBodyOpts.mapParams !== false) {
-          server.use(handler((req, _res, next) => {
-            Object.assign(req.params, req.body);
-            next();
-          }));
+        // (Both parsers fill req.body, so it's only mapped once.)
+        if (encBodyOpts.mapParams !== false && !paramSources.includes(fromBody)) {
+          paramSources.push(fromBody);
         }
       }
 

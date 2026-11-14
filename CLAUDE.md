@@ -89,7 +89,7 @@ All can be disabled by setting to `false` in the `transom` config node:
 - `fullResponse` - Add standard HTTP headers (custom middleware)
 - `favicon` - Serve favicon using `serve-favicon` package (default location: `./images/favicon.ico`)
 
-**Note:** With Express, `bodyParser`, `queryParser`, and `urlEncodedBodyParser` with `mapParams` enabled will add TWO middleware each (one for parsing, one for mapping to req.params).
+**Note:** `mapParams` isn't middleware. Express replaces `req.params` at every router layer, so the wrapper (`src/wrapper.ts`) adds a param mapper as the first handler of each route registered through `server.get/post/put/patch/del/head/options`. Route params win; `use()` middleware and routes added straight to `server.express` don't get mapped values.
 
 ### Request Context
 

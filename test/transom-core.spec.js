@@ -123,10 +123,9 @@ describe('TransomCore', function () {
         })
 
         core.initialize(dummyServer, myApi).then(function(server){
-            // With Express, bodyParser, queryParser, and urlEncodedBodyParser each add TWO middleware
-            // (one for parsing, one for mapParams). So we have more middleware calls than plugins.
-            // Just verify that middleware was added
-            expect(dummyServer.use.callCount).to.be.greaterThan(Object.keys(myApi.transom).length);
+            // One middleware per option, except queryParser (Express parses queries itself),
+            // plus the one that creates req.locals. mapParams is applied per route instead.
+            expect(dummyServer.use.callCount).to.equal(9);
             // Default api URI prefix.
             const prefix = server.registry.get('transom-config.definition.uri.prefix', "dummy");
             expect(prefix).to.equal('/api/v1');
@@ -209,9 +208,9 @@ describe('TransomCore', function () {
         })
 
         core.initialize(dummyServer, myApi).then(function(server){
-            // With Express, bodyParser, queryParser, and urlEncodedBodyParser each add TWO middleware
-            // Just verify that middleware was added
-            expect(dummyServer.use.callCount).to.be.greaterThan(Object.keys(myApi.transom).length);
+            // One middleware per option, except queryParser (Express parses queries itself),
+            // plus the one that creates req.locals. mapParams is applied per route instead.
+            expect(dummyServer.use.callCount).to.equal(9);
             done();
         })
         .catch(function(err){

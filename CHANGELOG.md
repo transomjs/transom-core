@@ -9,6 +9,19 @@
 - The deprecated `opts`, `pre`, `rm` and `inflightRequests` methods no longer throw when the
   server has no logger; they skip the warning instead.
 - The timezone warning no longer throws when there's no entry script (e.g. `node -e`).
+- **Fixed: `mapParams` had no effect with Express.** The body, query and form values were
+  copied onto `req.params` by middleware, and Express replaces `req.params` at every
+  router layer, so no route ever saw them. With transom-sequelize that meant query
+  filters, `_limit` and `_sort` were ignored, so a filtered `DELETE` deleted every row,
+  unless the app copied the query itself. The values are now copied in as the first
+  handler of each route registered through the server (`server.get()`, `post()`, `put()`,
+  `patch()`, `del()`, `head()`, `options()`):
+  - route parameters always win (a body or query value never overrides `:id`);
+  - otherwise later sources override earlier ones: JSON body, then query, then form;
+  - a `__proto__` key is ignored;
+  - middleware added with `use()`, and routes added straight to `server.express`, don't
+    get the values. Apps that worked around the bug by copying `req.query` themselves
+    keep working.
 - The package no longer ships `CLAUDE.md` or `.claude/`.
 
 ## 2.0.7

@@ -36,6 +36,10 @@ function echoPlugin() {
             };
             server.get('/echo', echo);
             server.post('/echo', echo);
+            server.put('/items/:id', echo);
+            server.del('/items/:id', echo);
+            // Added straight to Express, so the wrapper doesn't map params for it.
+            server.express.get('/unwrapped', echo);
             server.get('/meta', TransomCore.withMeta({ summary: 'normal' }, function (req, res) {
                 res.json(res.locals.routeMeta);
             }));
@@ -85,29 +89,31 @@ describe('TransomCore request handling', function () {
     });
 
     describe('mapping values onto req.params', function () {
-        // BUG: with Express 4 the mapping has no effect. The mapping middleware copies the
-        // values onto req.params, but Express's router replaces req.params for every layer it
-        // runs (middleware and routes alike), so no later middleware or route handler ever
-        // sees them. Apps work around it with their own mapping middleware.
-        it('maps a JSON body, but nothing after the mapping sees it', async function () {
-            running = await start({ bodyParser: {} });
-            const res = await running.fetch('/echo', {
-                method: 'POST',
+        // Express replaces req.params for every router layer, so the values are copied
+        // in as each route's first handler. Middleware that runs before routing (use())
+        // never sees them.
+        function postJson(path, data, method) {
+            return running.fetch(path, {
+                method: method || 'POST',
                 headers: { 'content-type': 'application/json' },
-                body: JSON.stringify({ name: 'Jo' })
+                body: JSON.stringify(data)
             });
-            const body = await res.json();
+        }
+
+        it('gives route handlers the JSON body as params, but not use() middleware', async function () {
+            running = await start({ bodyParser: {} });
+            const body = await (await postJson('/echo', { name: 'Jo', age: 7 })).json();
+            expect(body.routeParams).to.deep.equal({ name: 'Jo', age: 7 });
             expect(body.paramsBeforeRouting).to.deep.equal({});
-            expect(body.routeParams).to.deep.equal({});
         });
 
-        it('maps the query string, but nothing after the mapping sees it (BUG above)', async function () {
+        it('gives route handlers the query string as params', async function () {
             running = await start({ queryParser: {} });
             const body = await (await running.fetch('/echo?a=1&b=two')).json();
-            expect(body.paramsBeforeRouting).to.deep.equal({});
+            expect(body.routeParams).to.deep.equal({ a: '1', b: 'two' });
         });
 
-        it('maps a url-encoded form, but nothing after the mapping sees it (BUG above)', async function () {
+        it('gives route handlers a url-encoded form as params', async function () {
             running = await start({ urlEncodedBodyParser: {} });
             const res = await running.fetch('/echo', {
                 method: 'POST',
@@ -115,7 +121,39 @@ describe('TransomCore request handling', function () {
                 body: 'colour=blue&size=9'
             });
             const body = await res.json();
-            expect(body.paramsBeforeRouting).to.deep.equal({});
+            expect(body.routeParams).to.deep.equal({ colour: 'blue', size: '9' });
+        });
+
+        it('never lets a body or query value override a route parameter', async function () {
+            running = await start({ bodyParser: {}, queryParser: {} });
+            let body = await (await postJson('/items/42?id=99&q=x', { id: 7, name: 'Jo' }, 'PUT')).json();
+            expect(body.routeParams).to.deep.equal({ id: '42', name: 'Jo', q: 'x' });
+            body = await (await running.fetch('/items/5?id=6', { method: 'DELETE' })).json();
+            expect(body.routeParams).to.deep.equal({ id: '5' });
+        });
+
+        it('lets the query override the body, in the order the parsers are applied', async function () {
+            running = await start({ bodyParser: {}, queryParser: {}, urlEncodedBodyParser: {} });
+            const body = await (await postJson('/echo?name=fromQuery', { name: 'fromBody', other: 1 })).json();
+            expect(body.routeParams).to.deep.equal({ name: 'fromQuery', other: 1 });
+        });
+
+        it('ignores a __proto__ key in the body', async function () {
+            running = await start({ bodyParser: {} });
+            const res = await running.fetch('/echo', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: '{"__proto__": {"polluted": true}, "ok": 1}'
+            });
+            const body = await res.json();
+            expect(body.routeParams).to.deep.equal({ ok: 1 });
+            expect({}.polluted).to.equal(undefined);
+        });
+
+        it('does not map routes added straight to Express', async function () {
+            running = await start({ queryParser: {} });
+            const body = await (await running.fetch('/unwrapped?a=1')).json();
+            expect(body.routeParams).to.deep.equal({});
         });
 
         it('parses without mapping when mapParams is false', async function () {
@@ -124,13 +162,8 @@ describe('TransomCore request handling', function () {
                 queryParser: { mapParams: false },
                 urlEncodedBodyParser: { mapParams: false }
             });
-            const res = await running.fetch('/echo?q=1', {
-                method: 'POST',
-                headers: { 'content-type': 'application/json' },
-                body: JSON.stringify({ name: 'Jo' })
-            });
-            const body = await res.json();
-            expect(body.paramsBeforeRouting).to.deep.equal({});
+            const body = await (await postJson('/echo?q=1', { name: 'Jo' })).json();
+            expect(body.routeParams).to.deep.equal({});
         });
 
         it('rejects bodies over the limit (20kb by default, or the configured limit)', async function () {
