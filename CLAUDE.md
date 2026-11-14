@@ -122,7 +122,7 @@ transom.initialize(server, apiDefinition);
 
 ## Important Notes
 
-- Minimum Node version: 18 (enforced in package.json engines)
+- Minimum Node version: 22 (package.json engines, and initialize() rejects older versions)
 - URI prefix validation: Must start with `/`, cannot end with `/`
 - Timezone warning: Framework warns if process runs with non-zero timezone offset
 - Debug logging: Use `debug` package with namespace `transom:core`

@@ -2,8 +2,7 @@
 # transom-core
 Transom-core is a foundation for low-code REST API and realtime server development. Transom applications use metadata to configure pre-built and tested modules that allow developers to quickly piece together services that 'just work'! 
 
-[![Build Status](https://travis-ci.org/transomjs/transom-core.svg?branch=master)](https://travis-ci.org/transomjs/transom-core)
-[![Coverage Status](https://coveralls.io/repos/github/transomjs/transom-core/badge.svg?branch=master)](https://coveralls.io/github/transomjs/transom-core?branch=master)
+[![CI](https://github.com/transomjs/transom-core/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/transomjs/transom-core/actions/workflows/ci.yml)
 
 ## Based on many projects you already know!
 Transom uses Express as it's core. We use Passport for authentication, Mongoose for data, SocketIO for realtime updates, Nodemailer for sending emails created with EJS templates!

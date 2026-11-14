@@ -354,6 +354,28 @@ describe('TransomCore', function () {
 
     });
 
+    describe('the minimum Node.js version (22)', function () {
+        const originalVersion = process.version;
+        function runningOn(version) {
+            Object.defineProperty(process, 'version', { value: version, writable: true, configurable: true });
+        }
+        afterEach(function () {
+            runningOn(originalVersion);
+        });
+
+        it('rejects Node 20', async function () {
+            runningOn('v20.19.0');
+            const err = await new TransomCore().initialize({}, { transom: { suppressTimezoneWarning: true } }).then(() => null, (e) => e);
+            expect(err.message).to.equal("TransomJS doesn't support NodeJS versions older than 22.0.0, currently running v20.19.0.");
+        });
+
+        it('accepts exactly 22.0.0', async function () {
+            runningOn('v22.0.0');
+            const server = await new TransomCore().initialize({ transom: { suppressTimezoneWarning: true, requestLogger: false } });
+            expect(server.registry.get('transom-config.definition.uri.prefix')).to.equal('/api/v1');
+        });
+    });
+
     it('fails initialization with old Node.js version', function (done) {
         const dummyServer = {};
         dummyServer.pre = sinon.spy();

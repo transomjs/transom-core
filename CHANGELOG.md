@@ -1,6 +1,9 @@
 # @transomjs/transom-core change log
 
 ## Unreleased
+- **Requires Node.js 22 or newer** (`engines.node` is `>=22`). `initialize()` rejects older
+  versions; the check used to be `<= 18.0.0`, which rejected 18.0.0 itself but allowed 18.1. The compiled code targets ES2023,
+  and CI runs on Node 22 and 24.
 - Rewritten in TypeScript, with type definitions. The compiled code is in `dist/`;
   `require("@transomjs/transom-core")` and `require("@transomjs/transom-core/wrapper")`
   return the same things as before.

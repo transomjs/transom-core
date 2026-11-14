@@ -158,8 +158,8 @@ class TransomCore {
   ): Promise<TransomCore.TransomServer> {
     return new Promise((resolve, reject) => {
       // Fail nicely on old versions of Node.
-      const minNodeVersion = "18.0.0";
-      if (semver.lte(process.version, minNodeVersion)) {
+      const minNodeVersion = "22.0.0";
+      if (semver.lt(process.version, minNodeVersion)) {
         throw new Error(
           `TransomJS doesn't support NodeJS versions older than ${minNodeVersion}, currently running ${process.version}.`,
         );
