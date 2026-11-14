@@ -24,6 +24,19 @@ $ npm install --save @transomjs/transom-core
 An API definition is quite simply a JavaScript Object. It can be a single file, but it doesn't need to be. Break it up into logical pieces as needed or as your project grows. 
  * Checkout the API definition file from our <a target="_blank" href="https://github.com/4umfreak/transom-mongoose-example/blob/master/myApi.js">transom-mongoose-example</a> app.
  
+#### TypeScript
+Type definitions are included. Plugins implement `TransomPlugin<Options>`, and you can type
+your own registry keys by extending `RegistryMap`:
+```typescript
+import TransomCore = require("@transomjs/transom-core");
+
+declare module "@transomjs/transom-core" {
+  interface RegistryMap {
+    myService: MyService;
+  }
+}
+```
+
 #### index.js
 The following simple example is the `index.js` file from a REST API built with Transom. 
 * Import the Transom-core and create a new instance.

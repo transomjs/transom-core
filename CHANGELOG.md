@@ -1,5 +1,16 @@
 # @transomjs/transom-core change log
 
+## Unreleased
+- Rewritten in TypeScript, with type definitions. The compiled code is in `dist/`;
+  `require("@transomjs/transom-core")` and `require("@transomjs/transom-core/wrapper")`
+  return the same things as before.
+- Types: `TransomServer`, `TransomPlugin<Options>`, `TransomApiDefinition`, `Registry`, and
+  `RegistryMap` (extend it with declaration merging to type your own registry keys).
+- The deprecated `opts`, `pre`, `rm` and `inflightRequests` methods no longer throw when the
+  server has no logger; they skip the warning instead.
+- The timezone warning no longer throws when there's no entry script (e.g. `node -e`).
+- The package no longer ships `CLAUDE.md` or `.claude/`.
+
 ## 2.0.7
 - More updates
 
