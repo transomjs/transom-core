@@ -129,8 +129,11 @@ class TransomCore {
     return _registry;
   }
 
-  /** Adds a plugin. Plugins are initialized in the order they're configured. */
-  configure<O extends object>(plugin: TransomCore.TransomPlugin<O>, options?: O): void {
+  /**
+   * Adds a plugin. Plugins are initialized in the order they're configured.
+   * `options` is checked against the options type of the plugin's initialize().
+   */
+  configure<P extends TransomCore.TransomPlugin<never>>(plugin: P, options?: TransomCore.PluginOptions<P>): void {
     debug("Adding Transom plugin:", pluginName(plugin));
     _plugins.push({
       // Boundary: each plugin is called back with the options it was configured with.
@@ -530,6 +533,9 @@ declare namespace TransomCore {
     initialize(server: TransomServer, options: Options): unknown;
     preStart?(server: TransomServer, options: Options): unknown;
   }
+
+  /** The options type a plugin's initialize() takes. */
+  type PluginOptions<P extends TransomPlugin<never>> = Parameters<P["initialize"]>[1];
 
   /**
    * Properties transom-core adds to every request. transom-core doesn't augment
